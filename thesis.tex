@@ -1,0 +1,135 @@
+
+% basically this is a template file, you should be able to take it and
+% start running.
+
+% the philosophy behind this template is that each chapter or
+% chapterlike section goes in a separate file and you use the \include
+% command to input it into the final document.  The \includeonly
+% command can be used so you only need to work on one or two chapters at a
+% time (instead of having to either latex the entire book each time or
+% losing cross-references and page numbering)
+
+% copy this file and call it something like mythesis.tex
+
+\documentclass[12pt]{report}
+% note that the documentclass can take other option such as
+% twoside - for double sided printing
+% openright - if double side  chapters always start on odd pages
+% openany - if double side chapters start on the next page even or odd
+% 12pt can be replaced by 11pt
+
+\usepackage{suthesis-2e}
+% options are
+% online - now the default
+% hardcopy - turns off online includes signature page and copyright page in file 
+% engineer - does an engineer thesis instead of a PhD dissertation
+
+%% load other packages you need
+
+%% uncomment the following and create mythesis-macros.sty for all your
+%% own macros.  This keeps this top level file looking fairly neat.
+% \usepackage{mythesis-macros}
+
+%% certain types of theses require special title page format.  See the
+%% style file for the full list.  An example would be that for some of
+%% the language departments. 
+% \dualthesis \dept{Asian Languages} \languagemajor{Korean} 
+%% or education
+% \educationthesis
+
+    \title{Safety and Efficiency in Autonomous Vehicles through Planning with Uncertainty}
+    \author{Zachary Nolan Sunberg}
+    \dept{Aeronautics and Astronautics} % default is Computer Science, uncomment for other departments
+    \principaladviser{Mykel J. Kochenderfer}
+% \coprincipaladvisor{}
+    \firstreader{Marco Pavone}
+    \secondreader{Mac Schwager}
+% \thirdreader{}
+
+%the following command would (if uncommented) allow  only chapter1 and
+%chapter2 to be processed
+%\includeonly{chapter1,chapter2}
+
+% if you feel real savvy use
+% \typein{Now put in includeonly}
+% the \typein command stops latex at this point and allows you to type
+% in a command such as
+% \includeonly{chapter3,chapter5}
+% this can save some time and means you don't have to edit this file
+% as much.
+
+
+\begin{document}
+
+\beforepreface 
+
+\prefacesection{Abstract}
+
+One way that artificial intelligence will transform the human experience is by enabling machines to become autonomous.
+Vehicles with limited autonomy are already being used for transportation, monitoring, and agricultural applications, and will likely become ubiquitous in the future.
+Since they will interact closely with human beings, an effective autonomous vehicle or robot must maintain safety while acting efficiently in terms of time, energy, and other resources.
+Unfortunately, the objectives of safety and efficiency are fundamentally opposed because safety constraints prohibit some efficient actions.
+
+Interaction between safety and efficiency is made more difficult by the presence of uncertainty.
+Uncertainty is prevalent in every domain that robots operate in.
+Specifically, there are three different types of uncertainty that autonomous systems deal with.
+First, there is outcome uncertainty, which is inherent uncertainty about how the state of the world changes through time.
+Second, since sensors can only gain a limited amount of information about the world, there is state uncertainty.
+Third, there is uncertainty in the dynamics model that an autonomous system uses to plan.
+
+Correctly modelling uncertainty is very important for optimizing efficiency while maintaining safety.
+A model that contains too much uncertainty will result in over-conservative behavior because the autonomous agent cannot eliminate the possibility that safety constraints will be violated.
+On the other hand, a model with too little uncertainty may result in dangerous over-confident behavior.
+Improving the uncertainty model can result in simultaneous safety and efficiency gains.
+
+This thesis examines how planning with uncertainty using Markov decision processes (MDPs) and partially observable Markov decision processes (POMDPs) can improve autonomous vehicle performance.
+Two chapters contain simulation studies of two applications - collision avoidance for unmanned aerial vehicles and lane changing for autonomous cars.
+A third chapter shows that leading online POMDP solvers will fail in certain POMDPs that have continuous observation spaces and proposes a new algorithm, POMCPOW, to fix this.
+Finally, it presents the POMDPs.jl software interface, a package for the Julia programming language that provides for quick experimentation and comparison of leading algorithms for solving POMDPs with unprecedented ease.
+
+
+% first the preface sections.  
+
+% this includes the file preface.tex which should include the
+% following commands
+% \beforepreface
+% \prefacesection{preface}
+% body of the preface
+% \include{preface}
+
+% any other preface sections
+
+% the last preface section (e.g., acknowledgement.tex)
+% should look like
+% \prefacesection{Acknowledgement}
+% body 
+% \afterpreface
+% \include{acknowledgement}
+
+
+% now for the body of the thesis, modify the number of these lines as needed
+
+% this includes chapter1.tex which should start with a \chapter{...}
+% command 
+\include{pomcpow}
+% \include{chapter2}
+% \include{chapter3}
+% \include{chapter4}
+% \include{chapter5}
+
+% and the end material
+
+% \appendix
+% 
+% \include{appendix1}
+% \include{appendix2}
+% \include{appendix3}
+
+
+% bibliography.tex should include either 
+% \bibliographystyle{...}
+% \bibliography{mythesis}
+% or some other way of doing the bibliography
+% \include{bibliography}
+
+\end{document}

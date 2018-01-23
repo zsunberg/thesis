@@ -1,0 +1,28 @@
+Mon 22 Jan 2018 02:55:55 PM PST
+
+Questions:
+[ ] Focus just on autonomous vehicles, or both autonomous vehicles and robots?
+
+Tue 07 Nov 2017 07:16:18 AM PST
+
+Alright - time to start this
+
+Here are the tasks:
+
+[ ] UAV chapter
+    [ ] Resurrect Code
+    [ ] Switch to constrained action space
+[ ] POMCPOW Chapter
+    [ ] Show experimentally that DESPOT converges to QMDP
+        [ ] 2D Light-Dark with discrete actions
+        [ ] 1D Light-Dark with discrete actions
+    [ ] Problem where POMCPOW can beat discretized DESPOT
+        [ ] Tricky Lasertag
+        [ ] Car
+    [ ] Proof
+        [ ] Contact chinese guy
+[ ] Lane-changing chapter
+    [ ] Something with information gathering?
+    [ ] Use POMCPOW? (Probably not important)
+
+Missing piece: real-world driving problem where info-gathering matters
