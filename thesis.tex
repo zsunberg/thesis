@@ -65,27 +65,35 @@
 
 \prefacesection{Abstract}
 
-One way that artificial intelligence will transform the human experience is by enabling machines to become autonomous.
-Vehicles with limited autonomy are already being used for transportation, monitoring, and agricultural applications, and will likely become ubiquitous in the future.
-Since they will interact closely with human beings, an effective autonomous vehicle or robot must maintain safety while acting efficiently in terms of time, energy, and other resources.
+Effective autonomous air and ground vehicles will need to maintain safety while accomplishing tasks efficiently in terms of time and other resources.
 Unfortunately, the objectives of safety and efficiency are fundamentally opposed because safety constraints prohibit some efficient actions.
+The interaction between safety and efficiency for autonomous vehicles is made more difficult by the presence of uncertainty.
+Planning with good models of this uncertainty allows the vehicle to make better decisions about which actions are safe and is a key to operating efficiently.
 
-Interaction between safety and efficiency is made more difficult by the presence of uncertainty.
-Uncertainty is prevalent in every domain that robots operate in.
-Specifically, there are three different types of uncertainty that autonomous systems deal with.
-First, there is outcome uncertainty, which is inherent uncertainty about how the state of the world changes through time.
-Second, since sensors can only gain a limited amount of information about the world, there is state uncertainty.
-Third, there is uncertainty in the dynamics model that an autonomous system uses to plan.
+The partially observable Markov decision process (POMDP) is a systematic framework for modelling sequential decision problems with the state and outcome uncertainty that autonomous vehicles face.
+However, obtaining the exact solution to a general POMDP is an intractable problem.
+This thesis considers approximate POMDP solutions and seeks to quantify their utility for autonomous vehicles.
+Specifically, it contains three contributions.
 
-Correctly modelling uncertainty is very important for optimizing efficiency while maintaining safety.
-A model that contains too much uncertainty will result in over-conservative behavior because the autonomous agent cannot eliminate the possibility that safety constraints will be violated.
-On the other hand, a model with too little uncertainty may result in dangerous over-confident behavior.
-Improving the uncertainty model can result in simultaneous safety and efficiency gains.
+The first chapter considers the effects of modeling uncertainty in a difficult lane changing task for a self-driving car.
+Specifically, the research estimates the value of planning with the internal states of other human drivers such as their intentions and dispositions.
+While several other researchers have used internal-state-aware planning methods to interact with human drivers in desirable ways, they have not evaluated whether these methods offer a substantial quantitative improvement in performance over conventional approaches.
+This thesis shows that, in a simplified simulated setting, planning with internal states using a POMDP formulation can significantly improve both safety and efficiency simultaneously.
+Moreover, the thesis describes an experimental method for investigating other cases in which internal-state-aware planning may improve performance.
 
-This thesis examines how planning with uncertainty using Markov decision processes (MDPs) and partially observable Markov decision processes (POMDPs) can improve autonomous vehicle performance.
-Two chapters contain simulation studies of two applications - collision avoidance for unmanned aerial vehicles and lane changing for autonomous cars.
-A third chapter shows that leading online POMDP solvers will fail in certain POMDPs that have continuous observation spaces and proposes a new algorithm, POMCPOW, to fix this.
-Finally, it presents the POMDPs.jl software interface, a package for the Julia programming language that provides for quick experimentation and comparison of leading algorithms for solving POMDPs with unprecedented ease.
+The second chapter analyzes the use of a certifiable safety constraint alongside approximate optimization in the context of unmanned aerial vehicle (UAV) collision avoidance.
+UAV collision avoidance is challenging in particular because small unmanned vehicles often do not have the performance capability or legal permission to perform simple traditional altitude-based conflict resolution maneuvers, so they must perform more complex horizontal conflict resolution.
+In order to ensure safety, aerospace systems have particularly stringent certification requirements that likely preclude approximate randomized optimization techniques capable of handling uncertainty.
+This work evaluates the performance price that comes with using a simple certified policy and shows that, again, MDP and POMDP optimization can significantly reduce that price and improve both safety and efficiency simultaneously.
+
+The benefits of POMDP optimization in these domains can only be fully realized if solution techniques are improved to handle real-world decision domains that are continuous and irregular.
+To that end, the third contribution is a pair of new algorithms for solving POMDPs with continuous state, action, and observation spaces.
+These algorithms are motivated by analysis and numerical experiments that show that leading online POMDP solvers cannot handle continuous observation spaces.
+This failure, which is proven to lead to suboptimal behavior, is due to two problems.
+First, the large observation space causes policy trees to become too wide and not deep enough.
+Second, the number of state particles used to represent beliefs collapses to one, causing overconfidence.
+The new algorithms, POMCPOW and PFT-DPW, handle these problems using progressive widening and weighted particle belief representations.
+Numerical experiments show that they are able to solve problems that previous methods failed at.
 
 
 % first the preface sections.  
