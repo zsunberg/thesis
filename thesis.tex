@@ -1,16 +1,3 @@
-
-% basically this is a template file, you should be able to take it and
-% start running.
-
-% the philosophy behind this template is that each chapter or
-% chapterlike section goes in a separate file and you use the \include
-% command to input it into the final document.  The \includeonly
-% command can be used so you only need to work on one or two chapters at a
-% time (instead of having to either latex the entire book each time or
-% losing cross-references and page numbering)
-
-% copy this file and call it something like mythesis.tex
-
 \documentclass[12pt]{report}
 % note that the documentclass can take other option such as
 % twoside - for double sided printing
@@ -25,25 +12,52 @@
 % engineer - does an engineer thesis instead of a PhD dissertation
 
 %% load other packages you need
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage[capitalize]{cleveref}
+\usepackage{amsthm}
+\usepackage{thmtools}
+\usepackage{thm-restate}
+\usepackage{algorithm}
+\usepackage[noend]{algpseudocode}
+\usepackage{graphicx}
+\usepackage{subcaption}
+\usepackage{siunitx}
+\usepackage{booktabs}
+\usepackage{xcolor}
+
+\usepackage[natbib=true]{biblatex}
+\addbibresource{ref.bib}
 
 %% uncomment the following and create mythesis-macros.sty for all your
 %% own macros.  This keeps this top level file looking fairly neat.
 % \usepackage{mythesis-macros}
+\newcommand{\argmax}{\operatornamewithlimits{arg\,max}}
+\newcommand{\argmin}{\operatornamewithlimits{arg\,min}}
+\newcommand{\reals}{\ensuremath{\mathbb{R}}}
+\newcommand{\obsspace}{\ensuremath{\mathcal{O}}}
+\newcommand{\obsdist}{\ensuremath{\mathcal{Z}}}
 
-%% certain types of theses require special title page format.  See the
-%% style file for the full list.  An example would be that for some of
-%% the language departments. 
-% \dualthesis \dept{Asian Languages} \languagemajor{Korean} 
-%% or education
-% \educationthesis
+\newcommand{\result}[4]{% args mean, sem, color, len
+    $#1\pm#2$ & {\color{green!#3!red}\rule{#4cm}{8pt}}
+}
+\newcommand{\noresult}{ & }
 
-    \title{Safety and Efficiency in Autonomous Vehicles through Planning with Uncertainty}
-    \author{Zachary Nolan Sunberg}
-    \dept{Aeronautics and Astronautics} % default is Computer Science, uncomment for other departments
-    \principaladviser{Mykel J. Kochenderfer}
+
+\declaretheorem[name=Theorem]{theorem}
+\declaretheorem[name=Definition]{definition}
+\declaretheorem[name=Lemma]{lemma}
+\declaretheorem[name=Remark]{remark}
+
+
+\title{Safety and Efficiency in Autonomous Vehicles through Planning with Uncertainty}
+\author{Zachary Nolan Sunberg}
+\dept{Aeronautics and Astronautics} % default is Computer Science, uncomment for other departments
+\principaladviser{Mykel J. Kochenderfer}
 % \coprincipaladvisor{}
-    \firstreader{Marco Pavone}
-    \secondreader{Mac Schwager}
+\firstreader{Marco Pavone}
+\secondreader{Mac Schwager}
 % \thirdreader{}
 
 %the following command would (if uncommented) allow  only chapter1 and
@@ -127,14 +141,12 @@ A great deal of future work remains, including further mathematical analysis of 
 \include{uav}
 \include{multilane}
 \include{pomcpow}
-% \include{chapter4}
-% \include{chapter5}
 
 % and the end material
 
-% \appendix
+\appendix
 % 
-% \include{appendix1}
+\include{proof}
 % \include{appendix2}
 % \include{appendix3}
 
@@ -144,5 +156,7 @@ A great deal of future work remains, including further mathematical analysis of 
 % \bibliography{mythesis}
 % or some other way of doing the bibliography
 % \include{bibliography}
+
+\printbibliography
 
 \end{document}

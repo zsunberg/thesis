@@ -25,20 +25,140 @@
 
 \subsection{Uncertainty in Decision Making}
 
+\subsubsection{Outcome Uncertainty}
+\subsubsection{Model Uncertainty}
+\subsubsection{State Uncertainty}
+
 \subsection{Markov Decision Processes}
 
-\subsubsection{Definition}
-\subsubsection{Generative Models}
+The Markov decision process (MDP) is a mathematical formalism that can represent a wide range of sequential decision making problems. 
+In an MDP, an agent takes \emph{actions} that affect the \emph{state} of the system and collects \emph{rewards} based on the state and actions.
+The \emph{Markov property} is a key attribute of MDPs which states that the next state depends (possibly stochastically) on the current state and action, and not on any previous states or actions.
+
+Formally, an MDP is defined by the 5-tuple $(\mathcal{S}, \mathcal{A}, \mathcal{T}, \mathcal{R}, \gamma)$.
+The state space, $\mathcal{S}$, is the set of all possible states.
+The action space, $\mathcal{A}$, is the set of all actions available to the agent.
+The transition model, $\mathcal{T}$, represents likelihood of transitions, where $\mathcal{T}(s' \mid s, a)$ denotes the probability that the system will transition to state $s'$ given that action $a$ is taken in state $s$.
+The reward function, $\mathcal{R}: \mathcal{S} \times \mathcal{A} \times \mathcal{S} \to \reals$ represents the rewards received while interacting in the environment, where
+$\mathcal{R}(s, a, s')$ denotes the reward for transitioning from $s$ to $s'$ when action $a$ is taken.
+Finally, $\gamma$ governs how reward is discounted in the future.
+
+The objective in an MDP is to find a policy, $\pi: \mathcal{S} \to \mathcal{A}$, that maps each encountered state to an action and, when $a_t = \pi(s_t)$, maximizes the cumulative expected reward,
+\begin{equation} \label{eq:cumulative}
+    E\left[\sum_{t=0}^\infty \gamma^t \mathcal{R}(s_t, a_t, s_{t+1}) \right]
+\end{equation}
+where the subscript $t$ is the time index. The state action value function, $Q(s,a)$, is defined as the expectation of the future cumulative reward given that the agent starts in state $s$, immediately takes action $a$, and then follows the optimal policy.
 
 \subsection{Partially Observable Markov Decision Processes}
 
-\subsubsection{Definition}
+A partially observable Markov decision process (POMDP) is similar to and MDP except that the agent cannot directly observe the state.
+Instead, the agent only has access to observations that are generated probabilistically based on the actions and latent true states.
+A POMDP is defined by the 7-tuple $(\mathcal{S}, \mathcal{A}, \mathcal{T}, \mathcal{R}, \obsspace, \obsdist, \gamma)$, where $\mathcal{S}$, $\mathcal{A}$, $\mathcal{T}$, $\mathcal{R}$, and $\gamma$ have the same meaning as in an MDP.
+Additionally, $\obsspace$, is the observation space, and $\obsdist$ is the observation model.
+$\obsdist(o \mid s, a, s')$ is the probability or probability density of receiving observation $o$ in state $s'$ given that the previous state and action were $s$ and $a$.
+
+Information about the state may be inferred from the entire history of previous actions and observations and the initial information, $b_0$.
+Thus, in a POMDP, the agent's policy is a function mapping each possible history, $h_t = (b_0, a_0, o_1, a_1, o_2, \dots, a_{t-1}, o_t)$ to an action.
+In some cases, each state's probability can be calculated based on the history.
+This distribution is known as a \emph{belief}, with $b_t(s)$ denoting the probability of state $s$.
+
+The belief is a sufficient statistic for optimal decision making.
+That is, there exists a policy, $\pi^*$ such that, when $a_t = \pi^*(b_t)$, the expected cumulative reward or ``value function'' is maximized for the POMDP \cite{kaelbling1998planning,kochenderfer2015decision}.
+Given the POMDP model, each subsequent belief can be calculated using Bayes' rule according to
+\begin{equation} \label{eqn:update}
+    b'(s') = \frac{\int_{s\in\mathcal{S}} \obsdist(o \mid s, a, s') \mathcal{T}(s' \mid s, a) b(s) ds}
+    {\int_{s'\in\mathcal{S}} \int_{s\in\mathcal{S}} \obsdist(o \mid s, a, s') \mathcal{T}(s' \mid s, a) b(s) ds ds'} \text{.}
+\end{equation}
+When the state space is discrete, the integrals may be replaced with sums.
+
+\subsubsection{Generative Models}
+
+or many problems, it can be difficult to explicitly determine or represent the probability distributions $\mathcal{T}$ or $\obsdist$.
+Some solution approaches, however, only require samples from the state transitions and observations.
+A generative model, $G$, stochastically generates a new state, reward, and observation in the partially observable case, given the current state and action, that is $s', r = G(s,a)$ for an MDP, or $s', o, r = G(s, a)$ for a POMDP.
+A generative model implicitly defines $\mathcal{T}$ and $\obsdist$, even when they cannot be explicitly represented.
+
 \subsubsection{Belief MDP}
+
+Every POMDP is equivalent to an MDP where the state space of the MDP is the space of possible beliefs.
+The reward function of this "belief MDP" is the expectation of the state-action reward function with respect to the belief.
+The Bayesian update of the belief serves as a generative model for the belief space MDP.
 
 \subsection{Value Iteration}
 
-\subsection{Monte Carlo Tree Search}
+\subsection{Monte Carlo Tree Search} \label{sec:mcts}
+
+MCTS is an effective and widely studied algorithms for online decision-making \cite{browne2012survey}.
+It works by incrementally creating a policy tree consisting of alternating layers of state nodes and action nodes and estimating the state-action value function, $Q(s,a)$, at each of the action nodes.
+Only a generative model, $G$, is required by the algorithm.
+The tree is constructed by running $n$ Monte Carlo simulations with four phases, although there are many variations of this algorithm.
+\begin{enumerate}
+    \item \emph{Search}. In the initial phase of the simulation, the policy defined by the tree is used.
+        At each state node, a selection criterion based on $Q$ is used to choose a favorable action, and the tree is traversed through the node and to the next state node determined by $G$.
+    \item \emph{Expansion}. Eventually, the simulation reaches an action node that does not have any children.
+        At this point, a new state is sampled with $G$ and a corresponding node created along with children corresponding to each action. 
+    \item \emph{Rollout}. After the expansion step, the simulation is continued with a rollout policy, often consisting of randomly selected actions, until the future accumulated reward will be negligible because of the compounding discount factor.
+    \item \emph{Update}. Once the simulation has terminated, the estimates of $Q(s,a)$ at each of the visited action nodes are updated with the discounted reward received during the simulation after visiting the node.
+\end{enumerate}
+This approach builds a tree asymmetrically favoring regions of the state and action spaces that will be visited when the optimal policy is executed.
+
+\subsubsection{Upper Confidence Trees}
+
+The selection criterion used to choose actions in the search phase is very important.
+It must balance favoring actions with large $Q$ values that are expected to yield good results with exploration of new actions.
+The most widely used approach for this is known as the upper confidence bound for trees (UCT) algorithm.
+At each state node, it chooses the action that maximizes the upper confidence bound
+\begin{equation} \label{eqn:ucb}
+    UCB(s,a) = Q(s,a) + c \sqrt{\frac{\log N(s)}{N(s,a)}}
+\end{equation}
+where $N(s,a)$ is the number of times the action node has been visited, $N(s) = \sum_{a \in \mathcal{A}} N(s,a)$, and $c$ is a problem-specific parameter that governs the amount of exploration in the tree.
+The second term causes the algorithm to favor actions that have been taken less often.
+
+\subsubsection{Double Progressive Widening}
+
+In cases where the action and state spaces are large or continuous, the MCTS algorithm will produce trees that are very shallow.
+In fact, if the action space is continuous, the UCT algorithm will never try the same action twice (observe that, if $N(s,a) = 0$ then $UCB(s,a)$ in (\ref{eqn:ucb}) is infinite, so untried actions are always favored).
+Moreover, if the state space is continuous and the transition probability density is finite, the probability of sampling the same state twice from $G$ is zero.
+Because of this, simulations will never pass through the same state node twice and a tree below the first layer of state nodes will never be constructed.
+
+In progressive widening, the number of children of a node is artificially limited to $k N^\alpha$ where $N$ is the number of times the node has been visited and $k$ and $\alpha$ are parameters chosen for the problem \cite{couetoux2011double}.
+Originally, progressive widening was applied to the action space, and was found to be especially effective when a set of preferred actions was tried first \cite{browne2012survey}.
+The term \emph{double} progressive widening refers to progressive widening in both the state and action space.
+When the number of state nodes is greater than the limit, instead of simulating a new state transition, one of the previously generated states is chosen with probability proportional to the number of times it has been previously generated.
+
 
 \subsection{Particle Filtering}
 
-\subsection{Approximate Solutions to POMDPs}
+Aside from a few special cases, for example when the system dynamics are linear and the transition and observation distributions are Gaussian, the integrals in the Bayesian belief update (\ref{eqn:update}) are impossible or difficult to solve analytically.
+Thus, numerical approaches must be used.
+A popular technique for this is particle filtering, usually incorporating domain-specific heuristic modifications to prevent problems such as particle depletion \cite{thrun2005probabilistic}.
+
+Sequential importance resampling, one of the most common and effective variations, requires a state generative model, $G_s$ that can sample from the transition distribution and an explicit representation of the observation distribution, $\obsdist(\cdot \mid s, a, s')$, which is often easier to represent than the transition distribution.
+The belief is approximated with a set of $m$ particles, $\{s_i\}_{i=1}^m$ and associated weights, $\{w_i\}_{i=1}^m$.
+The probability of each state is approximated by the sum of the weights corresponding to particles with that state value,
+\begin{equation}
+    b(s) \approx \sum_{i=1}^m w_i \delta_s (s_i)
+\end{equation}
+where $\delta_s(\cdot)$ is the Dirac delta function centered at $s$.
+A belief update is approximated by sampling $m$ states $\{\tilde{s}_i\}_{i=1}^m$ from the collection of particles with probability proportional to the associated weight, generating a particle, $s'_i = G(\tilde{s}_i, a)$ for each of these states, and finally setting the new weight proportional to the probability of generating the measured observation with this state, $w'_i \propto \obsdist(o \mid \tilde{s}_i, a, s'_i)$.
+
+\subsection{Approximate Solutions to POMDPs} \label{sec:solutions}
+
+Considerable progress has been made in solving large POMDPs.
+Initially, exact offline solutions to problems with only a few discrete states, actions, and observations were sought by using value iteration and taking advantage of the convexity of the value function \cite{kaelbling1998planning}, although solutions to larger problems were also explored using Monte Carlo simulation and interpolation between belief states \cite{thrun1999monte}.
+Many effective offline planners for discrete problems use point based value iteration, where a selection of points in the belief space are used for value function approximation,  \cite{kurniawati2008sarsop}.
+Offline solutions for problems with continuous state and observation spaces have also been proposed \cite{bai2014integrated,brechtel2013solving}.
+
+There are also various solution approaches that are applicable to specific classes of POMDPs, including continuous problems.
+For example, \citet{platt2010belief} simplify planning in large domains by assuming that the most likely observation will always be received, which can provide an acceptable approximation in some problems with unimodal observation distributions.
+\citet{morere2016bayesian} solve a monitoring problem with continuous spaces with a Gaussian process belief update.
+\citet{hoey2005solving} propose a method for partitioning large observation spaces without information loss, but demonstrate the method only on small state and action spaces that have a modest number of conditional plans.
+Other methods involve motion-planning techniques \cite{melchior2007particle,prentice2009belief,bry2011rapidly}.
+In particular, \citet{agha2011firm} present a method to take advantage of the existence of a stabilizing controller in belief space planning.
+\citet{van2012motion} perform local optimization with respect to uncertainty on a pre-computed path, and \citet{indelman2015planning} devise a hierarchical approach that handles uncertainty in both the robot's state and the surrounding environment.
+
+General purpose online algorithms for POMDPs have also been proposed.
+Many early online algorithms focused on point-based belief tree search with heuristics for expanding the trees \cite{ross2008online}.
+The introduction of POMCP \cite{silver2010pomcp} caused a pivot toward the simple and fast technique of using the same simulations for decision-making and using beliefs implicitly represented as unweighted collections of particles.
+Determinized sparse partially observable tree (DESPOT) is a similar approach that attempts to achieve better performance by analyzing only a small number of random outcomes in the tree \cite{somani2013despot}.
+Adaptive belief tree (ABT) was designed specifically to accommodate changes in the environment without having to replan from scratch \cite{kurniawati2016online}.
