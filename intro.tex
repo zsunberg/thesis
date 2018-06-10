@@ -29,6 +29,11 @@
 \subsubsection{Model Uncertainty}
 \subsubsection{State Uncertainty}
 
+\todo{POMDP methods also require a reward function.
+In some cases, constructing the reward function that balances different objectives (e.g., safety and efficiency) is straightforward. However, in other cases, human preferences can be difficult to quantify and encode into a reward function.
+For these cases, inverse reinforcement learning can be used to determine a suitable reward function based on data of how human drivers act \cite{levine2012continuous, sadigh2016leverage}.}
+
+
 \subsection{Markov Decision Processes}
 
 The Markov decision process (MDP) is a mathematical formalism that can represent a wide range of sequential decision making problems. 
@@ -53,9 +58,9 @@ where the subscript $t$ is the time index. The state action value function, $Q(s
 
 A partially observable Markov decision process (POMDP) is similar to and MDP except that the agent cannot directly observe the state.
 Instead, the agent only has access to observations that are generated probabilistically based on the actions and latent true states.
-A POMDP is defined by the 7-tuple $(\mathcal{S}, \mathcal{A}, \mathcal{T}, \mathcal{R}, \obsspace, \obsdist, \gamma)$, where $\mathcal{S}$, $\mathcal{A}$, $\mathcal{T}$, $\mathcal{R}$, and $\gamma$ have the same meaning as in an MDP.
-Additionally, $\obsspace$, is the observation space, and $\obsdist$ is the observation model.
-$\obsdist(o \mid s, a, s')$ is the probability or probability density of receiving observation $o$ in state $s'$ given that the previous state and action were $s$ and $a$.
+A POMDP is defined by the 7-tuple $(\sspace, \aspace, \mathcal{T}, \mathcal{R}, \ospace, \odist, \gamma)$, where $\sspace$, $\aspace$, $\mathcal{T}$, $\mathcal{R}$, and $\gamma$ have the same meaning as in an MDP.
+Additionally, $\ospace$, is the observation space, and $\odist$ is the observation model.
+$\odist(o \mid s, a, s')$ is the probability or probability density of receiving observation $o$ in state $s'$ given that the previous state and action were $s$ and $a$.
 
 Information about the state may be inferred from the entire history of previous actions and observations and the initial information, $b_0$.
 Thus, in a POMDP, the agent's policy is a function mapping each possible history, $h_t = (b_0, a_0, o_1, a_1, o_2, \dots, a_{t-1}, o_t)$ to an action.
@@ -66,17 +71,17 @@ The belief is a sufficient statistic for optimal decision making.
 That is, there exists a policy, $\pi^*$ such that, when $a_t = \pi^*(b_t)$, the expected cumulative reward or ``value function'' is maximized for the POMDP \cite{kaelbling1998planning,kochenderfer2015decision}.
 Given the POMDP model, each subsequent belief can be calculated using Bayes' rule according to
 \begin{equation} \label{eqn:update}
-    b'(s') = \frac{\int_{s\in\mathcal{S}} \obsdist(o \mid s, a, s') \mathcal{T}(s' \mid s, a) b(s) ds}
-    {\int_{s'\in\mathcal{S}} \int_{s\in\mathcal{S}} \obsdist(o \mid s, a, s') \mathcal{T}(s' \mid s, a) b(s) ds ds'} \text{.}
+    b'(s') = \frac{\int_{s\in\mathcal{S}} \odist(o \mid s, a, s') \mathcal{T}(s' \mid s, a) b(s) ds}
+    {\int_{s'\in\mathcal{S}} \int_{s\in\mathcal{S}} \odist(o \mid s, a, s') \mathcal{T}(s' \mid s, a) b(s) ds ds'} \text{.}
 \end{equation}
 When the state space is discrete, the integrals may be replaced with sums.
 
 \subsubsection{Generative Models}
 
-or many problems, it can be difficult to explicitly determine or represent the probability distributions $\mathcal{T}$ or $\obsdist$.
+or many problems, it can be difficult to explicitly determine or represent the probability distributions $\mathcal{T}$ or $\odist$.
 Some solution approaches, however, only require samples from the state transitions and observations.
 A generative model, $G$, stochastically generates a new state, reward, and observation in the partially observable case, given the current state and action, that is $s', r = G(s,a)$ for an MDP, or $s', o, r = G(s, a)$ for a POMDP.
-A generative model implicitly defines $\mathcal{T}$ and $\obsdist$, even when they cannot be explicitly represented.
+A generative model implicitly defines $\mathcal{T}$ and $\odist$, even when they cannot be explicitly represented.
 
 \subsubsection{Belief MDP}
 
@@ -102,7 +107,7 @@ The tree is constructed by running $n$ Monte Carlo simulations with four phases,
 \end{enumerate}
 This approach builds a tree asymmetrically favoring regions of the state and action spaces that will be visited when the optimal policy is executed.
 
-\subsubsection{Upper Confidence Trees}
+\subsubsection{Upper Confidence Trees} \label{sec:uct}
 
 The selection criterion used to choose actions in the search phase is very important.
 It must balance favoring actions with large $Q$ values that are expected to yield good results with exploration of new actions.
@@ -114,7 +119,7 @@ At each state node, it chooses the action that maximizes the upper confidence bo
 where $N(s,a)$ is the number of times the action node has been visited, $N(s) = \sum_{a \in \mathcal{A}} N(s,a)$, and $c$ is a problem-specific parameter that governs the amount of exploration in the tree.
 The second term causes the algorithm to favor actions that have been taken less often.
 
-\subsubsection{Double Progressive Widening}
+\subsubsection{Double Progressive Widening} \label{sec:dpw}
 
 In cases where the action and state spaces are large or continuous, the MCTS algorithm will produce trees that are very shallow.
 In fact, if the action space is continuous, the UCT algorithm will never try the same action twice (observe that, if $N(s,a) = 0$ then $UCB(s,a)$ in (\ref{eqn:ucb}) is infinite, so untried actions are always favored).
@@ -127,20 +132,20 @@ The term \emph{double} progressive widening refers to progressive widening in bo
 When the number of state nodes is greater than the limit, instead of simulating a new state transition, one of the previously generated states is chosen with probability proportional to the number of times it has been previously generated.
 
 
-\subsection{Particle Filtering}
+\subsection{Particle Filtering} \label{sec:particle}
 
 Aside from a few special cases, for example when the system dynamics are linear and the transition and observation distributions are Gaussian, the integrals in the Bayesian belief update (\ref{eqn:update}) are impossible or difficult to solve analytically.
 Thus, numerical approaches must be used.
 A popular technique for this is particle filtering, usually incorporating domain-specific heuristic modifications to prevent problems such as particle depletion \cite{thrun2005probabilistic}.
 
-Sequential importance resampling, one of the most common and effective variations, requires a state generative model, $G_s$ that can sample from the transition distribution and an explicit representation of the observation distribution, $\obsdist(\cdot \mid s, a, s')$, which is often easier to represent than the transition distribution.
+Sequential importance resampling, one of the most common and effective variations, requires a state generative model, $G_s$ that can sample from the transition distribution and an explicit representation of the observation distribution, $\odist(\cdot \mid s, a, s')$, which is often easier to represent than the transition distribution.
 The belief is approximated with a set of $m$ particles, $\{s_i\}_{i=1}^m$ and associated weights, $\{w_i\}_{i=1}^m$.
 The probability of each state is approximated by the sum of the weights corresponding to particles with that state value,
 \begin{equation}
     b(s) \approx \sum_{i=1}^m w_i \delta_s (s_i)
 \end{equation}
 where $\delta_s(\cdot)$ is the Dirac delta function centered at $s$.
-A belief update is approximated by sampling $m$ states $\{\tilde{s}_i\}_{i=1}^m$ from the collection of particles with probability proportional to the associated weight, generating a particle, $s'_i = G(\tilde{s}_i, a)$ for each of these states, and finally setting the new weight proportional to the probability of generating the measured observation with this state, $w'_i \propto \obsdist(o \mid \tilde{s}_i, a, s'_i)$.
+A belief update is approximated by sampling $m$ states $\{\tilde{s}_i\}_{i=1}^m$ from the collection of particles with probability proportional to the associated weight, generating a particle, $s'_i = G(\tilde{s}_i, a)$ for each of these states, and finally setting the new weight proportional to the probability of generating the measured observation with this state, $w'_i \propto \odist(o \mid \tilde{s}_i, a, s'_i)$.
 
 \subsection{Approximate Solutions to POMDPs} \label{sec:solutions}
 
@@ -162,3 +167,9 @@ Many early online algorithms focused on point-based belief tree search with heur
 The introduction of POMCP \cite{silver2010pomcp} caused a pivot toward the simple and fast technique of using the same simulations for decision-making and using beliefs implicitly represented as unweighted collections of particles.
 Determinized sparse partially observable tree (DESPOT) is a similar approach that attempts to achieve better performance by analyzing only a small number of random outcomes in the tree \cite{somani2013despot}.
 Adaptive belief tree (ABT) was designed specifically to accommodate changes in the environment without having to replan from scratch \cite{kurniawati2016online}.
+
+\subsection{QMDP} \label{sec:qmdp}
+
+\todo{write QMDP section}
+
+\section{Contributions}

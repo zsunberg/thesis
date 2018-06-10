@@ -1,4 +1,4 @@
-\chapter{Online Algorithms for POMDPs with Continuous Observation Spaces}
+\chapter{Online Algorithms for Continuous POMDPs}
 
 \section{Background}
 
@@ -208,7 +208,7 @@ Fortunately, the experiments in \cref{sec:experiments} show that it is often eas
     \end{algorithmic}
 \end{algorithm}
 
-\subsection{POMCPOW}
+\subsection{POMCPOW} \label{sec:pomcpow}
 
 \begin{algorithm}[t]
     \caption{POMCPOW} \label{alg:pomcpow}
@@ -225,7 +225,7 @@ Fortunately, the experiments in \cref{sec:experiments} show that it is often eas
                 \State $o \gets \text{select } o \in C(ha) \text{ w.p. } \frac{M(hao)}{\sum_{o} M(hao)}$
             \EndIf
             \State $\text{append } s' \text{ to } B(hao)$ \label{lin:insert}
-            \State $\text{append } \obsdist(o \mid s, a, s') \text{ to } W(hao)$ \label{lin:weight}
+            \State $\text{append } \odist(o \mid s, a, s') \text{ to } W(hao)$ \label{lin:weight}
             \If{$o \notin C(ha)$} \Comment{new node}
                 \State $C(ha) \gets C(ha) \cup \{o\}$
                 \State $total \gets r + \gamma \Call{Rollout}{s', hao, d-1}$
@@ -284,7 +284,7 @@ Due to the high dimensionality of the observation space, similar to Sub Hunt, no
 
 \subsection{Observation Distribution Requirement}
 
-It is important to note that, while POMCP, POMCP-DPW, and DESPOT only require a generative model of the problem,  both POMCPOW and PFT-DPW require a way to query the relative likelihood of different observations ($\obsdist$ in line~\ref{lin:weight}).
+It is important to note that, while POMCP, POMCP-DPW, and DESPOT only require a generative model of the problem,  both POMCPOW and PFT-DPW require a way to query the relative likelihood of different observations ($\odist$ in line~\ref{lin:weight}).
 One may object that this will limit the application of POMCPOW to a small class of POMDPs, but we think it will be an effective tool in practice for two reasons.
 
 First, this requirement is no more stringent than the requirement for a standard importance resampling particle filter, and such filters are used widely, at least in the field of robotics that the authors are most familiar with. 
@@ -299,47 +299,15 @@ For example, the authors of the original paper describing POMCP~\cite{silver2010
 
 Numerical simulation experiments were conducted to evaluate the performance of POMCPOW and PFT-DPW compared to other solvers. The open source code for the experiments is built on the POMDPs.jl framework \cite{egorov2017pomdps} and is hosted at \url{https://github.com/zsunberg/ContinuousPOMDPTreeSearchExperiments.jl}. In all experiments, the solvers were limited to \SI{1}{second} of computation time per step. Belief updates were accomplished with a particle filter independent of the planner, and no part of the tree was saved for re-use on subsequent steps. Hyperparameter values are shown in \cref{sec:hyper}.
 
-\begin{table*}
-    {\centering
+\begin{sidewaystable}
+    {
         \caption{Experimental Results} \label{tab:experiments}
 
-
-    \begin{tabular}{lrlrlrlrlrlrl}
-        \toprule
-            & Multilane \makebox[0pt][l]{(C, D, C)} & \\        
-        \midrule
-            POMCPOW & \result{0.3}{0.0}{77}{0.77} \\
-PFT-DPW & \noresult{} \\
-QMDP & \result{0.3}{0.0}{74}{0.74} \\
-POMCP-DPW & \noresult{} \\
-DESPOT & \result{0.4}{0.0}{90}{0.90} \\
-POMCP\textsuperscript{D} & \noresult{} \\
-DESPOT\textsuperscript{D} & \noresult{} \\
-
-        \bottomrule
-    \end{tabular}
-
-
-
-%     \begin{tabular}{lrlrlrlrlrlrl}
-%         \toprule
-%             & Laser Tag \makebox[0pt][l]{(D, D, D)} & & Light Dark \makebox[0pt][l]{(D, D, C)} & & Sub Hunt \makebox[0pt][l]{(D, D, C)} & & VDP Tag \makebox[0pt][l]{(C, C, C)} & & Multilane \makebox[0pt][l]{(C, D, C)} & \\        
-%         \midrule
-%             POMCPOW & \result{-10.3}{0.2}{81}{0.81} & \result{56.1}{0.6}{76}{0.76} & \result{69.2}{1.3}{87}{0.87} & \result{29.3}{0.8}{95}{0.95} & \result{0.3}{0.0}{77}{0.77} \\
-% PFT-DPW & \result{-11.1}{0.2}{74}{0.74} & \result{57.2}{0.5}{77}{0.77} & \result{77.4}{1.1}{97}{0.97} & \result{27.2}{0.8}{88}{0.88} & \noresult{} \\
-% QMDP & \result{-10.5}{0.2}{79}{0.79} & \result{-6.4}{1.0}{14}{0.14} & \result{28.0}{1.3}{35}{0.35} & \noresult{} & \result{0.3}{0.0}{74}{0.74} \\
-% POMCP-DPW & \result{-10.6}{0.2}{78}{0.78} & \result{-7.3}{1.0}{13}{0.13} & \result{28.3}{1.3}{35}{0.35} & \result{16.4}{1.0}{53}{0.53} & \noresult{} \\
-% DESPOT & \result{-8.9}{0.2}{92}{0.92} & \result{-6.8}{1.0}{13}{0.13} & \result{26.8}{1.3}{34}{0.34} & \noresult{} & \result{0.4}{0.0}{90}{0.90} \\
-% POMCP\textsuperscript{D} & \result{-14.1}{0.2}{49}{0.49} & \result{61.1}{0.4}{81}{0.81} & \result{28.0}{1.3}{35}{0.35} & \result{14.7}{0.9}{47}{0.47} & \noresult{} \\
-% DESPOT\textsuperscript{D} & \noresult{} & \result{54.2}{1.1}{74}{0.74} & \result{27.4}{1.3}{34}{0.34} & \result{14.3}{1.0}{46}{0.46} & \noresult{} \\
-% 
-%         \bottomrule
-%     \end{tabular}
-
+        \input{results_table}
     }
-    \vspace{1mm}
+    \vspace{5mm}
     \footnotesize{The three C or D characters after the solver indicate whether the state, action, and observation spaces are continuous or discrete, respectively. For continuous problems, solvers with a superscript D were run on a version of the problem with discretized action and observation spaces, but they interacted with continuous simulations of the problem.}
-\end{table*}
+\end{sidewaystable}
 
 \subsection{Laser Tag}
 
@@ -353,7 +321,7 @@ The goal is to reach the origin.
 If action $0$ is taken at the origin, a reward of $100$ is given and the problem terminates; If action $0$ is taken at another location, a penalty of $-100$ is given.
 There is a cost of $-1$ at each step before termination.
 The agent receives a more accurate observation in the ``light'' region around $s=10$.
-Specifically, observations are continuous ($\obsspace=\reals$) and normally distributed with standard deviation $\sigma=|s-10|$.
+Specifically, observations are continuous ($\ospace=\reals$) and normally distributed with standard deviation $\sigma=|s-10|$.
 
 \Cref{tab:experiments} shows the mean reward from $1000$ simulations for each solver, and \cref{fig:ld} shows an example experiment.
 The optimal strategy involves moving toward the light region and localizing before proceeding to the origin. 
@@ -377,7 +345,7 @@ The target stochastically moves either two steps towards the goal or one step fo
 The agent has six actions, move three steps north, south, east, or west, engage the other submarine, or ping with active sonar.
 If the agent chooses to engage and the target is unaware and within a range of 2, a hit with reward 100 is scored; The problem ends when a hit is scored or the target reaches its goal edge.
 
-An observation consists of 8 sonar returns ($\obsspace = \reals^8$) at equally-spaced angles that give a normally distributed estimate ($\sigma=0.5$) of the range to the target if the target is within that beam and a measurement with higher variance if it is not.
+An observation consists of 8 sonar returns ($\ospace = \reals^8$) at equally-spaced angles that give a normally distributed estimate ($\sigma=0.5$) of the range to the target if the target is within that beam and a measurement with higher variance if it is not.
 The range of the sensors depends on whether the agent decides to use active sonar.
 If the agent does not use active sonar it can only detect the other submarine within a radius of 3, but pinging with active sonar will detect at any range.
 However, active sonar alerts the target to the presence of the agent, and when the target is aware, the hit probability when engaging drops to $60\%$.
@@ -407,7 +375,7 @@ All other solvers have similar performance to QMDP.
 The final experimental problem is called Van Der Pol tag and has continuous state, action, and observation spaces.
 In this problem an agent moves through 2D space to try to tag a target ($\mathcal{S}=\reals^4$) that has a random unknown initial position in $[-4, 4]\times[-4,4]$.
 The agent always travels at the same speed, but chooses a direction of travel and whether to take an accurate observation ($\mathcal{A} = [0, 2\pi)\times\{0,1\}$).
-The observation again consists of 8 beams ($\obsspace=\reals^8$) that give measurements to the target.
+The observation again consists of 8 beams ($\ospace=\reals^8$) that give measurements to the target.
 Normally, these measurements are too noisy to be useful ($\sigma=5$), but, if the agent chooses an accurate measurement with a cost of \num{5}, the observation has low noise ($\sigma=0.1$).
 The agent is blocked if it comes into contact with one of the barriers that stretch from \num{0.2} to \num{3.0} in each of the cardinal directions (see \cref{fig:vdp}), while the target can move freely through.
 There is a cost of \num{1} for each step, and a reward of \num{100} for tagging the target (being within a distance of \num{0.1}).
@@ -427,6 +395,7 @@ Second, the continuous state space and obstacles make it difficult to construct 
 \Cref{tab:experiments} shows the mean reward for $1000$ simulations of this problem for each solver.
 Since a POMCPOW iteration requires less computation than a PFT-DPW iteration, POMCPOW simulates more random rollouts and thus performs slightly better.
 
+\todo{Add Multilane Section}
 
 \subsection{Hyperparameters} \label{sec:hyper}
 

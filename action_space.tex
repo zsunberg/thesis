@@ -1,0 +1,59 @@
+% File for tikz thing with the car
+
+
+\documentclass{standalone}
+
+\usepackage{tikz}
+\usetikzlibrary{arrows}
+\usetikzlibrary{arrows.meta}
+
+
+\newcommand*{\RaisedText}[1]{%
+  \begingroup
+    \leavevmode
+    \rlap{\kern-.1pt\raise.1pt\hbox{\color{white}#1}}%
+    \rlap{\kern.1pt\raise-.1pt\hbox{\color{black}#1}}%
+    \hbox{#1}%
+  \endgroup
+}
+
+\begin{document}
+
+\begin{tikzpicture}
+    \tikzstyle{act} = [white,align=center,fill=gray,opacity=.5,text opacity=1]
+        \node[anchor=center,inner sep=0] at (0,0) {\includegraphics[width=0.8\textwidth,trim={0 5cm 0 5cm}]{media/car.jpg}};
+		
+		\coordinate (ctr) at (0,0);
+		\coordinate (fwd) at (5,0);
+		\coordinate (back) at (-3.5,0);
+		\coordinate (left) at (0,3);
+		\coordinate (right) at (0,-3);
+		
+		\coordinate (fwdleft) at (5,3);
+		\coordinate (fwdright) at (5,-3);
+		\coordinate (backleft) at (-3.5,3);
+		\coordinate (backright) at (-3.5,-3);
+		
+		\coordinate (farback) at (-6,0);
+		
+		\draw[->, >=latex, blue!20!white, line width=15pt]   (ctr) to node[act]{\RaisedText{accelerate}} (fwd) ;
+		
+		\draw[->, >=latex, blue, line width=25pt]   (ctr) to node[white,left]{\RaisedText{brake}} (farback) ;		
+		
+		\draw[->, >=latex, blue!20!white, line width=15pt]   (ctr) to node[act]{\RaisedText{decelerate}} (back) ;
+		
+		\draw[->, >=latex, blue!20!white, line width=15pt]   (ctr) to node[act]{\RaisedText{lane}\\ \RaisedText{change}\\ \RaisedText{left}} (left) ;
+		
+		\draw[->, >=latex, blue!20!white, line width=15pt]   (ctr) to node[act]{\RaisedText{lane}\\ \RaisedText{change}\\ \RaisedText{right}} (right) ;
+		
+		\draw[->, >=latex, blue!20!white, line width=15pt]   (ctr) to node[act]{\RaisedText{accelerate}\\ \RaisedText{and lane}\\ \RaisedText{change left}} (fwdleft) ;
+		
+		\draw[->, >=latex, blue!20!white, line width=15pt]   (ctr) to node[act]{\RaisedText{accelerate}\\ \RaisedText{and lane}\\ \RaisedText{change right}} (fwdright) ;
+		
+		\draw[->, >=latex, blue!20!white, line width=15pt]   (ctr) to node[act]{\RaisedText{decelerate}\\ \RaisedText{and lane}\\ \RaisedText{change left}} (backleft) ;
+		
+		\draw[->, >=latex, blue!20!white, line width=15pt]   (ctr) to node[act]{\RaisedText{decelerate}\\ \RaisedText{and lane}\\ \RaisedText{change right}} (backright) ;	
+
+\end{tikzpicture}
+
+\end{document}

@@ -1,0 +1,193 @@
+\chapter{Proof of Theorem 1} \label{sec:proof}
+
+A version of Monte Carlo tree search with double progressive widening has been proven to converge to the optimal value function on fully observable MDPs by \citet{auger2013continuous}.
+We utilize this proof to show that POMCP-DPW converges to a solution that is sometimes suboptimal.
+
+First we establish some preliminary definitions taken directly from \citet{auger2013continuous}.
+
+\begin{definition}[Regularity Hypothesis]
+    The \emph{Regularity hypothesis} is the assumption that for any $\Delta > 0$, there is a non zero probability to sample an action that is optimal with precision $\Delta$. More precisely, there is a $\theta > 0$ and a $p > 1$ (which remain the same during the whole simulation) such that for all $\Delta > 0$, 
+\begin{align}
+    Q(ha) & \geq Q^*(h)-\Delta \nonumber{}\\ & \text{ with probability at least } \min(1, \theta \Delta^p)\text{.}
+\end{align}
+\end{definition}
+
+\begin{definition}[Exponentially sure in $n$]
+    We say that some property depending on an integer $n$ is exponentially sure in $n$ if there exists positive constants $C$, $h$, and $\eta$ such that the probability that the property holds is at least $$1-C \exp(-hn^\eta)\text{.}$$
+\end{definition}
+
+In order for the proof from \citet{auger2013continuous} to apply, the following four minor modifications to the POMCP-DPW algorithm must be made: 
+
+\begin{enumerate}
+    \item Instead of the usual logarithmic exploration, use \emph{polynomial exploration}, that is, select actions based on the criterion
+    \begin{equation}
+        Q(ha) + \sqrt{\frac{N(h)^{e_d}}{N(ha)}}
+    \end{equation}
+    as opposed to the traditional criterion
+    \begin{equation}
+        Q(ha) + c \sqrt{\frac{\log N(h)}{N(ha)}}\text{,}
+    \end{equation}
+    and create a new node for progressive widening when $\lfloor N^\alpha \rfloor > \lfloor (N-1)^\alpha \rfloor$ rather than when the number of children exceeds $k N^\alpha$.
+
+    \item Instead of performing rollout simulations, keep creating new single-child nodes until the maximum depth is reached.
+
+    \item In line~\ref{lin:selecto}, instead of selecting an observation randomly, select the observation that has been visited least proportionally to how many times it has been visited.
+
+    \item Use the depth-dependent coefficient values in Table 1 from \citet{auger2013continuous} instead of choosing static values.
+\end{enumerate}
+
+This version of the algorithm will be referred to as ``modified POMCP-DPW''. The algorithm with these changes is listed in \Cref{alg:mpomcpdpw}.
+
+\begin{algorithm}[htb]
+    \caption{Modified POMCP-DPW} \label{alg:mpomcpdpw}
+    \begin{algorithmic}[1]
+        \Procedure{Plan}{$b$}
+            \For{$i \in 1:n$}
+                \State $s \gets \text{sample from }b$ \label{lin:msample}
+                \State $\Call{Simulate}{s, b, d_\text{max}}$
+            \EndFor
+            \State $\textbf{return } \underset{a}{\argmax}\, Q(ba)$
+        \EndProcedure
+
+        \Procedure {ActionProgWiden}{$h$}
+            \If{$\lfloor N(h)^{\alpha_{a,d}} \rfloor > \lfloor (N(h)-1)^{\alpha_{a,d}} \rfloor$}
+                \State $a \gets \Call{NextAction}{h}$
+                \State $C(h) \gets C(h) \cup \{a\}$
+            \EndIf
+            \State $\textbf{return } \underset{a \in C(h)}{\argmax}\, Q(ha) + \sqrt{\frac{N(h)^{e_d}}{N(ha)}}$
+        \EndProcedure
+
+        \Procedure {Simulate}{$s$, $h$, $d$}        
+            \If{$d = 0$}
+                \State \textbf{return} $0$
+            \EndIf
+            \State $a \gets \Call{ActionProgWiden}{h}$
+            \If{$\lfloor N(ha)^{\alpha_{o,d}} \rfloor > \lfloor (N(ha)-1)^{\alpha_{o,d}} \rfloor$}
+                \State $s',o,r \gets G(s,a)$
+                \State $C(ha) \gets C(ha) \cup \{o\}$
+                \State $M(hao) \gets M(hao) + 1$ \label{lin:gencount}
+                \State $\text{append } s' \text{ to } B(hao)$ \label{lin:minsertion}
+            \Else
+                \State $o \gets \underset{o \in C(ha)}{\argmin}\, N(hao)/M(hao)$
+                \State $s' \gets \text{select } s' \in B(hao) \text{ w.p. } \frac{1}{|B(hao)|}$
+                \State $r \gets R(s,a,s')$
+            \EndIf
+            \State $total \gets r + \gamma \Call{Simulate}{s', hao, d-1}$
+            \State $N(h) \gets N(h)+1$
+            \State $N(ha) \gets N(ha)+1$
+            \State $Q(ha) \gets Q(ha) + \frac{total - Q(ha)}{N(ha)}$
+            \State \textbf{return} $total$
+        \EndProcedure
+    \end{algorithmic}        
+\end{algorithm}
+
+We now define the ``QMDP value'' that POMCP-DPW converges to (this is repeated from the main text of the paper) and prove a preliminary lemma.
+
+\begin{definition}[QMDP value]
+     Let $Q_\text{MDP}(s,a)$ be the optimal state-action value function assuming full observability starting by taking action $a$ in state $s$.
+     The \emph{QMDP value} at belief $b$, $Q_\text{MDP}(b,a)$, is the expected value of $Q_\text{MDP}(s,a)$ when $s$ is distributed according to $b$.   
+\end{definition}
+
+\begin{lemma} \label{lem:onestate}
+    If POMCP-DPW or modified POMCP-DPW is applied to a POMDP with a continuous observation space and observation probability density functions that are finite everywhere, then each history node in the tree will have only one corresponding state, that is $|B(h)| = 1, M(h)=1\, \forall h$.
+\end{lemma}
+
+\begin{proof}
+    Since the observation probability density function is finite, each call to the generative model will produce a unique observation with probability 1.
+    Because of this, lines~\ref{lin:gencount}~and~\ref{lin:minsertion} of \cref{alg:mpomcpdpw} will only be executed once for each observation.
+\end{proof}
+
+We are now ready to restate and prove the theorem from the text.
+
+% \begin{theorem}[Modified POMCP-DPW convergence to QMDP] \label{thm:pqmdp}
+% If a bounded-horizon POMDP meets the following conditions: 1) the state and observation spaces are continuous with a finite observation probability density function, and 2) the regularity hypothesis is met, then modified POMCP-DPW will produce a value function estimate, $\hat{Q}$, that converges to the QMDP value for the problem.
+% Specifically, there exists a constant $C>0$, such that after $n$ iterations,
+% \begin{equation*}
+%     \left| \hat{Q}(b,a) - Q_\text{MDP}(b,a) \right| \leq \frac{C}{n^{1/(10d_{\max}-7)}}
+% \end{equation*}
+% exponentially surely in $n$, for every action $a$.
+% \end{theorem}
+
+\qmdp*
+
+\begin{proof}
+    We prove that modified POMCP-DPW functions exactly as the Polynomial UCT (PUCT) algorithm defined by \citet{auger2013continuous} applied to an augmented fully observable MDP, and hence converges to the QMDP value.
+    We will show this by proposing incremental changes to \cref{alg:mpomcpdpw} that do not change its function that will result in an algorithm identical to PUCT.
+
+    Before listing the changes, we define the ``augmented fully observable MDP" as follows: For a POMDP $\mathcal{P} = (\mathcal{S}, \mathcal{A}, \mathcal{T}, \mathcal{R}, \mathcal{O}, \mathcal{Z}, \gamma)$, and belief $b$, the \emph{augmented fully observable MDP}, $\mathcal{M}$, is the MDP defined by $(\mathcal{S}_A, \mathcal{A}, \mathcal{T}_A, \mathcal{R}, \gamma)$, where 
+    \begin{equation}
+        \mathcal{S}_A = \mathcal{S} \cup \{b\}
+    \end{equation}
+    and, for all $x, x' \in \mathcal{S}_A$,
+    \begin{equation}
+        \mathcal{T}_A (x'|x, a) = \begin{cases}
+                \mathcal{T} (x' | x, a) & \text{if } x \in \mathcal{S} \\
+                \int_S b(s) \mathcal{T} (x' | s, a) ds & \text{if } x = b
+        \end{cases}
+    \end{equation}
+    This is simply the fully observable MDP augmented with a special state representing the current belief.
+    It is clear that the value function for this problem $Q_\mathcal{M}(b, a)$ is the same as the QMDP value for the POMDP, $Q_\text{MDP}(b,a)$.
+    Thus, by showing that modified POMCP-DPW behaves exactly as PUCT applied to $\mathcal{M}$, we show that it estimates the QMDP values.
+
+    % For the above definition, we assume the state space is integrable. Is that ok without stating?
+
+    Consider the following modifications to \cref{alg:mpomcpdpw} that do not change its behavior when the observation space is continuous:
+
+    \begin{enumerate}
+        \item Eliminate the state count $M$. \emph{Justification}: By \cref{lem:onestate}, its value will be 1 for every node.
+        \item Remove $B$ and replace with a mapping $H$ from each node to a state of $\mathcal{M}$; define $H(b) = b$. \emph{Justification}: By \cref{lem:onestate} $B$ always contains only a single state, so $H$ contains the same information.
+        \item Generate states and rewards with $G_\mathcal{M}$, the generative model of $\mathcal{M}$, instead of $G$. \emph{Justification}: Since the state transition model for the fully observable MDP is the same as the POMDP, these are equivalent for all $s \in \mathcal{S}$.
+        \item Remove the $s$ argument of \textproc{Simulate}. \emph{Justification}: The sampling in line~\ref{lin:msample} is done implicitly in $G_\mathcal{M}$ if $h=b$, and $s$ is redundant in other cases because $h$ can be mapped to $s$ through $H$.
+    \end{enumerate}
+
+    The result of these changes is shown in \cref{alg:c}. It is straightforward to verify that this algorithm is equivalent to PUCT applied to $\mathcal{M}$.
+    Each observation-terminated history, $h$, corresponds to a PUCT ``decision node'', $z$, and each action-terminated history, $ha$, corresponds to a PUCT ``chance node'', $w$.
+    In other words, the observations have no meaning in the tree other than making up the histories, which are effectively just keys or aliases for the state nodes.
+    
+    Since PUCT is guaranteed by Theorem 1 of \citet{auger2013continuous} to converge to the optimal value function of $\mathcal{M}$ exponentially surely, POMCP-DPW is guaranteed to converge to the QMDP value exponentially surely, and the theorem is proven.
+
+\begin{algorithm}[htb]
+    \caption{Modified POMCP-DPW on a continuous observation space} \label{alg:c}
+    \begin{algorithmic}[1]
+        \Procedure{Plan}{$b$}
+            \For{$i \in 1:n$}
+                \State $\Call{Simulate}{(b), d_\text{max}}$
+            \EndFor
+            \State $\textbf{return } \underset{a}{\argmax}\, Q(ha)$
+        \EndProcedure
+
+        \Procedure {ActionProgWiden}{$h$}
+            \If{$\lfloor N(h)^{\alpha_{a,d}} \rfloor > \lfloor (N(h)-1)^{\alpha_{a,d}} \rfloor$}
+                \State $a \gets \Call{NextAction}{h}$
+                \State $C(h) \gets C(h) \cup \{a\}$
+            \EndIf
+            \State $\textbf{return } \underset{a \in C(h)}{\argmax}\, Q(ha) + \sqrt{\frac{N(h)^{e_d}}{N(ha)}}$
+        \EndProcedure
+
+        \Procedure {Simulate}{$h$, $d$}        
+            \If{$d = 0$}
+                \State \textbf{return} $0$
+            \EndIf
+            \State $a \gets \Call{ActionProgWiden}{h, d}$
+            \If{$\lfloor N(ha)^{\alpha_{o,d}} \rfloor > \lfloor (N(ha)-1)^{\alpha_{o,d}} \rfloor$}
+                \State $\cdot, o, \cdot \gets G(H(h), a)$
+                \State $H(hao),r \gets G_\mathcal{M}(H(h),a)$
+                \State $C(ha) \gets C(ha) \cup \{o\}$
+            \Else
+                \State $o \gets \underset{o \in C(ha)}{\argmin}\, N(hao)$
+                \State $r \gets R(H(h), a, H(hao))$
+            \EndIf
+            \State $total \gets r + \gamma \Call{Simulate}{hao, d-1}$
+            \State $N(h) \gets N(h)+1$
+            \State $N(ha) \gets N(ha)+1$
+            \State $Q(ha) \gets Q(ha) + \frac{total - Q(ha)}{N(ha)}$
+            \State \textbf{return} $total$
+        \EndProcedure
+    \end{algorithmic}
+\end{algorithm}
+
+\end{proof}
+
+\begin{remark}
+    One may object that multiple histories may map to the same state through $H$, and thus the history nodes in a modified POMCP-DPW tree are not equivalent to state nodes in the PUCT tree. In fact, the PUCT algorithm does not check to see if a state has previously been generated by the model, so it may also contain multiple decision nodes $z$ that correspond to the same state. Though this is not explicitly stated by the authors, it is clear from the algorithm description, and the proof still holds.
+\end{remark}

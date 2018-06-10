@@ -7,6 +7,7 @@
 
 \usepackage{todonotes}
 \usepackage{graphicx}
+\usepackage{hyperref}
 
 \usepackage[top=1in,bottom=1in,left=1.5in,right=1.5in]{geometry}
 
@@ -32,7 +33,8 @@
     Zachary Sunberg\\
     Advisor: Mykel Kochenderfer\\
     Department of Aeronautics and Astronautics\\
-    May 25th, 2018, 9 AM (Refreshments at 8:45), Building 200, Room 205
+    May 25th, 2018, 9 AM (Refreshments at 8:45), Building 200, Room 205\\
+    Live Stream: \url{http://zachary.sunberg.net/talks}
 \end{center}
 
 Safety is the highest priority for autonomous vehicles, but if they are not also efficient in terms of time and other resources, they will have a significant competitive disadvantage and may not be adopted widely.
@@ -42,7 +44,7 @@ However, it is challenging to find an optimal policy for POMDPs that represent c
 
 This dissertation analyzes and demonstrates improvements related to several aspects of making safe and efficient decisions.
 First, it considers how pseudo-random approximate algorithms can be combined with trusted deterministic algorithms to make certification easier and increase reliability.
-Second, simulation results demonstrate that modeling uncertainty in the internal states of other road users in highway lane-changing using POMDP planning can lead to significant improvement over a formulation that models only outcome uncertainty.
+Second, simulation results demonstrate that modeling uncertainty in the internal states of other road users using POMDP planning can lead to significant improvement over a formulation that models only outcome uncertainty.
 Finally, the research shows that current leading online POMDP algorithms are unable to solve some problems with continuous observation spaces, and overcomes this weakness using double progressive widening and weighted particle filtering.
 
 % \includegraphics[width=10in]{some-fig.jpg}

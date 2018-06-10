@@ -1,13 +1,441 @@
-\chapter{The Value of Planning with the Internal State of Traffic Participants in Autonomous Freeway Driving}
+\chapter{Planning with Internal States in Freeway Driving}
 
 \section{Human-Robot Interaction in Autonomous Driving}
 
+One challenge in introducing autonomous automobiles is ensuring that they interact safely with human drivers.
+In order to navigate complex driving scenarios, human drivers routinely predict what other drivers will do and make driving decisions based on these predictions.
+Autonomous vehicles typically take an overly conservative approach, which can result in physical danger, reduced efficiency, and an uncomfortable experience. % \cite{sadigh2016leverage}.
+In a 2015 study, autonomous vehicles drove over 1.2 million miles without being legally responsible for any accidents.
+However, the autonomous vehicles actually had a higher accident rate than average for a conventional vehicle in the United States because of accidents for which they were not legally responsible \cite{schoettle2015crashes}.
+This result suggests that there is significant room for improvement in autonomous-human vehicle interaction.  
+
+One approach to improve interaction would be to program ad-hoc logic for each situation into the vehicles.
+However, this approach is time-consuming and error prone, and edge cases that the programmers have not foreseen can present a safety risk.
+Furthermore, this approach limits the performance of the system to the capability of the human programmer.
+In contrast, artificial intelligence and machine learning techniques have the potential to provide a more robust approach to such decision-making tasks.
+This chapter explores techniques based on Markov decision processes (MDPs) and partially observable Markov decision processes (POMDPs) \cite{Kochenderfer2015}.
+
+POMDPs are particularly well suited for modeling decisions for autonomous vehicles because they explicitly capture the limitations of the vehicle's sensors in measuring the relevant state variables \cite{brechtel2013mcvi, sadigh2016gathering, bai2015intention}.
+Though sensors can accurately measure many of the relevant variables pertaining to the physical state of the vehicles, the internal state (e.g., intentions and aggressiveness) of other drivers and road users can only be indirectly inferred \cite{sadigh2016gathering, bai2015intention, lam2015, dc2015}.
+The hypothesis explored in this chapter is that inferring and planning with an estimate of the internal states of the traffic participants will improve safety and efficiency.
+
+Driving strategies derived from MDPs and POMDPs depend on several ingredients to be successful.
+First, an accurate stochastic model of the environment, including the behavior of other drivers is necessary. 
+Though this chapter uses a very simple model, there has been significant work on creating better models in recent years \cite{grindele2015trafficmodel, WheelerRobbelKochenderfer2015, sadigh2014}, and the POMDP planning methods used here can easily be adapted to use these new models.
+
+Before investing the effort required to develop and test a POMDP-based decision making system for real autonomous vehicles, it is important to quantify the potential performance improvement.
+This chapter presents a method that involves comparing solutions obtained from several variations of Monte Carlo Tree Search \cite{browne2012mcts}.
+For this research, I chose to investigate these ideas in the context of making lane changes on a freeway (a situation that has been anecdotally noted to be difficult \cite{naughton2015freeway}).
+I present a method for quantifying the performance gains that could result from perfect estimation of and planning with hidden behavior model parameters.
+In addition, I show that when model parameters are correlated, estimating the parameters online using physical measurements can greatly improve performance. Planning using a POMDP problem formulation that dynamically takes uncertainty into account can further improve performance.
+
 \section{Freeway Driving POMDP}
 
-\subsection{IDM-Mobil Driver Model}
-\subsection{Parameter Correlation}
-\subsection{Reward Function}
+The focus of this chapter is on freeway driving.
+I investigate a scenario in which a vehicle must navigate from the rightmost to the leftmost lane of a four lane freeway within a specified distance while maintaining safety and comfort (see \cref{fig:scene}).
+
+\begin{figure}[tb]
+    \centering
+    \includegraphics[width=\columnwidth]{media/scene.png}
+    \caption[Lane changing scenario]{The example decision making scenario for this chapter. An autonomous vehicle (bottom center) must travel from the rightmost to leftmost lane within a limited distance.}
+    \label{fig:scene}
+\end{figure}
+
+Throughout this section, $x$ denotes position in the \emph{longitudinal} direction, that is, the direction that the cars move along the road in meters, and $y$ denotes position in the \emph{lateral} direction, that is, the lane the car occupies in lane units.
+The problem can be stated as a discrete-time POMDP defined by the tuple $(\sspace, \aspace, \tdist, \reward, \ospace, \odist)$, which consists of
+
+\begin{itemize}
+    \item The state space, $\sspace$: A system state, $$s = (q_0, \{(\ith{\phys},\ith{\beh})\}_{i \in 1..N}) \in \sspace\text{,}$$ consists of the physical state of the ego vehicle ($q_0$), and physical state and behavior model for each of the $N$ other cars in the scene.
+The physical state, $$\ith{\phys} = (\ith{x},\ith{y},\ith{\dot{x}},\ith{\dot{y}})\text{,}$$ consists of the car's longitudinal and lateral position and velocity. The internal state (behavior model parameters), $\ith{\beh}$, is drawn from a set of behaviors $\Beh$.
+    \item The action space, $\aspace$: An action, $u = (\ego{\ddot{x}}, \ego{\ddot{y}}) \in \aspace$, consists of the longitudinal acceleration and lateral velocity of the \av{} vehicle. The action space is discrete and pruned to prevent crashes (see \cref{sec:action}).
+    \item The state transition model, $\tdist: \sspace \times \aspace \times \sspace \to \reals$: The value $\tdist(s,u,s')$ is the probability of transitioning to state $s'$ given that action $u$ is taken by the \av{} at state $s$. This function is implicitly defined by a generative model that consists of a state transition function, $F(\cdot)$, and a stochastic noise process (see \cref{sec:dynamics}).
+    \item The reward model, $\reward:\sspace \times \aspace \times \sspace \to \reals$: The reward function, defined in \cref{sec:reward}, rewards reaching the left lane within the distance limit and penalizes unsafe actions.
+    \item The observation space, $\ospace$: An observation, $o \in \ospace$ consists of the physical states of all of the vehicles, that is $o=\{p_i\}_{i \in 1..N}$. No information about the internal state is directly included in the observation.
+    \item The observation model, $Z: S \times O \to \mathbb{R}$: The value $Z(s',o)$ is the probability of receiving observation $o$ when the system transitions to state $s'$. In these experiments, the physical state is assumed to be known exactly, though it is not difficult to relax this assumption. %Hence, $Z(s',o) = \delta_{\phys'}(o)$ where $\delta_{\phys'}$ is a Dirac delta function with the origin at $\phys'$.
+\end{itemize}
+The remainder of this section elaborates on this model.
+
+\subsection{Driver Modeling} \label{sec:driver}
+
+The driver models for each car have two components: an acceleration model that governs the longitudinal motion and a lane change model that determines the lateral motion.
+In this chapter, the acceleration model is the Intelligent Driver Model (IDM) \cite{treiber2000idm}, and the lane change model is the ``Minimizing Overall Braking Induced by Lane change'' (MOBIL) model \cite{kesting2007mobil}.
+Both of these models have a small number of parameters that determine the  behavior of the drivers.
+The distribution of these parameters in the population of vehicles will be denoted $\Theta$.
+
+% IDM Model Description
+\subsubsection{IDM}
+
+The IDM Model was developed as a simple model for ``microscopic'' simulations of traffic flows and is able to reproduce some phenomena observed in real-world traffic flows.
+It determines the longitudinal acceleration for a human-driven car, $\ddot{x}$, based on the desired distance gap to the preceding car, $g$, the absolute velocity, $\dot{x}$, and the velocity relative to the preceding car $\Delta \dot{x}$.
+The longitudinal acceleration is governed by the following equation:
+\begin{equation}
+    \ddot{x}_\text{IDM} = a \left[ 1 - \left( \frac{\dot{x}}{\dot{x}_0} \right)^{\delta} - \left(\frac{g^*(\dot{x}, \Delta \dot{x})}{g}\right)^2 \right] \text{,}
+\end{equation}
+where $g^*$ is the desired gap given by
+\begin{equation} \label{eqn:gstar}
+    g^*(\dot{x}, \Delta \dot{x}) = g_0 + T \dot{x} + \frac{\dot{x}\Delta \dot{x}}{2 \sqrt{a b}} \text{.}
+\end{equation}
+Brief descriptions and values for the parameters not defined here are provided later in \cref{tab:modelparams}.
+
+A small amount of noise is also added to the acceleration
+\begin{equation}
+    \ddot{x} = \ddot{x}_\text{IDM} + w \text{,}
+\end{equation}
+where $w$ is a random variable with a triangular distribution with support between $-a/2$ and $a/2$. In cases where the noise might cause a hard brake or lead to a state where a crash is unavoidable, the distribution is scaled appropriately.
+
+\subsubsection{MOBIL}
+
+The MOBIL model makes the decision to change lanes based on maximizing the acceleration for the vehicle and its neighbors.
+When considering a lane change, MOBIL first ensures that the safety criterion $\tilde{\ddot{x}}_\text{follow} \geq -b_\text{safe}$, where $\ddot{x}_n$ will be the acceleration of the following car if the lane change is made and $b_\text{safe}$ is the safe braking limit. 
+It then makes the lane change if the following condition is met
+\begin{equation}
+    \tilde{\ddot{x}}_c - \ddot{x}_c + p \left( \tilde{\ddot{x}}_n - \ddot{x}_n + \tilde{\ddot{x}}_o - \ddot{x}_o \right) > \Delta a_\text{th}
+\end{equation}
+where the quantities with tildes are calculated assuming that a lane change is made, the quantities with subscript $c$ are quantities for the car making the lane change decision, those with $n$ are for the new follower, and those with $o$ are for the old follower.
+The parameter $p \in [0,1]$ is the politeness factor, which represents how much the driver values allowing other vehicles to increase their acceleration. The parameter $\Delta a_\text{th}$ is the threshold acceleration increase to initiate a lane changing maneuver. Parameter values are listed in \cref{tab:modelparams}.
+
+
+\subsection{Physical Dynamics} \label{sec:dynamics}
+
+The physical dynamics are simplified for the sake of computational efficiency. Time is divided into discrete steps of length $\dt$.
+The longitudinal dynamics assume constant acceleration, and the lateral dynamics assume constant velocity over a time step, that is
+\begin{eqnarray*}
+    x'&=&x + \dot{x} \dt + \frac{1}{2} \ddot{x} \dt^2 \\
+    \dot{x}'&=&\dot{x} + \ddot{x} \dt \\
+    y'&=&y + \dot{y} \dt \text{.}
+\end{eqnarray*}
+
+There is a physical limit to the braking acceleration, $\bmax$.
+Lateral velocity is allowed to change instantly because cars on a freeway can achieve the lateral velocity needed for a lane change in time much shorter than $\dt$ by steering.
+If MOBIL determines that a lane change should be made, the lateral velocity, $\dot{y}$, is set to $\dot{y}_\text{lc}$.
+Lane changes are not allowed to reverse. Once a lane change has begun, $\dot{y}$ remains constant until the lane change is completed (this is the reason that $\dot{y}$ is part of the state).
+When a vehicle passes over the midpoint of a lane, lateral movement is immediately stopped so that lane changes always end at exactly the center of a lane.
+
+Since MOBIL only considers cars in adjacent lanes, there must be a coordination mechanism so that two cars do not converge into the same lane simultaneously.
+In order to accomplish this, if two cars begin changing into the same lane simultaneously, and the front vehicle is within $g^*$ of the rear vehicle, the rear vehicle's lane change is canceled.
+
+In order to reduce the computational demands of decision-making, only \SI{50}{\meter} of road in front of the \av{} and \SI{50}{\meter} behind are modeled. %(see \cref{fig:scene}).
+Thus, a model for vehicle entry into this section is needed.
+If there are fewer than $N_\text{max}$ vehicles on the road, a new vehicle is generated.
+First, a behavior for the new vehicle is drawn from $\Theta$, and the initial speed is set to $\dot{x}_0 + \sigma_\text{vel} w_0$, where $\dot{x}_0$ is the desired speed from the behavior model and $w_0$ is a zero-mean, unit-variance, normally distributed random variable that is independent for each car.
+If this speed is greater than the \av{}'s speed, the new vehicle will appear at the back of the road section; if it is less, it will appear at the front.
+For each lane, $g^*$ is calculated, either for the new vehicle if the appearance is at the back or for the nearest following vehicle if the appearance is at the front.
+The new vehicle appears in the lane where the clearance to the nearest car is greatest.
+If no clearance is greater than $g^*$, the new vehicle does not appear.
+
+Once the \av{} reaches the target lane ($y = y_\text{target}$) or passes the distance limit ($x \geq L$), the problem terminates.
+
+For convenience, throughout this chapter, the behavior described so far will be denoted compactly by the state transition function
+    \begin{equation}
+        s' = F(s,u,w) \text{.}
+    \end{equation}
+
+\subsection{Action Space for Crash-Free Driving} \label{sec:action}
+
+At each time step, the planner for the \av{} must choose the longitudinal and lateral acceleration.
+For simplicity, the vehicle chooses from up to ten discrete actions which are shown in \cref{fig:actions}.
+The vehicle may make an incremental decrease or increase in speed or maintain speed, and it may begin a left or right lane change or maintain the current lane.
+The combination of these adjustments make up nine of the actions.
+The final action is a braking action determined dynamically based on the speed and position of the vehicle ahead.
+At each time step, the maximum permitted acceleration, $a_\text{max}$, is the maximum acceleration that the \av{} could take such that, if the  vehicle ahead immediately begins braking at the physical limit, $\bmax$, to a stop, the \av{} will still be able to stop before hitting it without exceeding physical braking limits itself.
+The braking action is $(\ego{\ddot{x}}, \ego{\ddot{y}}) = (\min \{a_\text{max}, -b_\text{nominal} \}, 0)$.
+
+\begin{figure}[tb]
+    \centering
+    \includestandalone[mode=buildnew,width=0.5\textwidth]{action_space}
+    
+    \caption{Ego action space}
+    \label{fig:actions}
+\end{figure}
+
+
+The inclusion of the dynamic braking action guarantees that there will always be an action available to the \av{} to avoid a crash.
+At each step, the action space is pruned so that if $\ego{\ddot{x}} > a_\text{max}$ or if a lane change leads to a crash, that action is not considered.
+Since the IDM and MOBIL models are both crash-free \cite{kesting2009agents}, and actions that lead to crashes for the \av{} are not considered, no crashes occur in the simulation.
+Eliminating crashes in our model is justifiable because it is likely that in an actual autonomous vehicle a high-level planning system would be augmented with a low-level crash prevention system to increase safety and facilitate certification. 
+In addition, it is difficult to model driver behavior in the extraordinary case of a crash. 
+
+\subsection{Reward Function and Objectives} \label{sec:reward}
+
+The qualitative objectives in solving this problem are to reach the target lane within a specified distance, $L$, and maintain the comfort and safety of both the \av{} and the other nearby vehicles.
+Thus, the following two metrics will be used to evaluate planning performance: 1) the fraction of episodes in which the \av{} reaches the target lane, and 2) the fraction of episodes in which \emph{any} vehicle operates in an unsafe manner.
+For this work, hard braking and unusually slow velocity are considered unsafe.
+A hard braking maneuver is defined as $\ddot{x} < -b_\text{hard}$ and slow velocity as $\dot{x} < \dot{x}_\text{slow}$, where $b_\text{hard}$ and $\dot{x}_\text{slow}$ are chosen to be uncomfortably abrupt deceleration or slow travel that might result in an accident in real conditions (see \cref{tab:params}).
+In addition to quantifying safety, hard braking also serves as a proxy for comfort.
+
+In order to encourage the planner to choose actions that will maximize these metrics, the reward function for the POMDP is defined as follows: 
+\begin{equation} \label{eqn:reward}
+    % R(s, s') = \mathbf{1}(\ego{y}=y_\text{target}) - \lambda \sum_{i=1}^N \mathbf{1}(\ith{\dot{x}}'- \ith{\dot{x}} < -b_\text{hard} \Delta t) \text{.}
+    \reward(s, a, s') = \text{in\_goal}(s') - \lambda \left(\text{any\_hard\_brakes}(s, s') + \text{any\_too\_slow}(s')\right)
+\end{equation}
+where
+\begin{align}
+    \text{in\_goal}(s') &= \mathbf{1}(\ego{y} = y_\text{target}, \ego{x} \leq L) \text{,}\\
+    \text{any\_hard\_brakes}(s,s') &= \max_{i \in 1..N}\{\mathbf{1}(\ith{\dot{x}}' - \ith{\dot{x}} < -b_\text{hard} \Delta t) \} \text{,}\\
+    \text{any\_too\_slow}(s') &= \max_{i \in 1..N} \{\mathbf{1}(\ith{\dot{x}} < \dot{x}_\text{slow})\} \text{.}
+\end{align}
+That is, there is a positive reward for reaching the target lane within the distance limit, and hard brakes and slow velocity for any car are penalized.
+The weight $\lambda$ balances the competing goals and can be adjusted to create an approximate curve of Pareto-optimal solutions.
+
+\subsection{Initial Scenes} \label{sec:initial}
+
+Initial scenes for the simulations are generated by beginning a simulation with only the \av{} on the road section and then simulating 200 steps to allow other vehicles to accumulate in the scene.
 
 \section{Solution Approaches}
 
+Each of the solution techniques is based on MCTS-DPW (\cref{sec:mcts,sec:uct,sec:dpw}), but handles uncertainty in the internal states differently.
+
+\subsection{Approach 1: Assume normal behavior}
+
+The first performance baseline is established by planning as if all cars behave according to a single static ``normal'' internal state (see \cref{tab:modelparams}).
+In this case, the problem is an MDP, which is solved using the MCTS-DPW algorithm.
+This is an overconfident baseline --- it plans assuming it knows more about the other drivers than is justified by the information it has collected.
+
+\subsection{Approach 2: Model all uncertainty as outcome uncertainty (Naive MDP)}
+
+The second performance baseline is established by planning as if all uncertainty is simply outcome uncertainty, that is, as if the problem were an MDP with a state consisting only of the physical state and the internal states random variables, independent at each timestep, distributed according to the internal state distribution $\Theta$. 
+This model would be the result of fitting a Markov model with only the physical state based on data from all drivers.
+The MDP is again solved using the MCTS-DPW algorithm.
+
+\subsection{Approach 3: Mean Model Predictive Control} \label{sec:mpc}
+
+Since information about the human's internal state can be inferred by observing the car's physical motion, performance superior to either of the baselines can be achieved by estimating $\beh$ online.
+This is accomplished with a particle filter (see \cref{sec:particle}, \cite{thrun2005probabilistic}).
+Filtering is independent for each car, but all of the behavior parameters for a given car are estimated jointly.
+There are two versions of the filter.
+In the first version, a particle, $\hat{\theta}$, consists of values of all model parameters.
+In the second version, all parameters are assumed perfectly correlated (see \cref{sec:dist}), so a particle consists of only a single value, the ``aggressiveness''.
+
+The belief at a given time consists of the exactly known physical state, \phys, and a collection of $M$ particles, $\{\hat{\theta}^k\}_{k=1}^M$, along with associated weights, $\{W^k\}_{k=1}^M$.
+To update the belief when action $u$ is taken, $M$ new particles are sampled with probability proportional to the weights, and sampled noise values $\{\hat{w}^k\}_{k=1}^M$ are used to generate new states according to ${\hat{s}^k}{'} = F((\phys, \hat{\theta}^k), u, \hat{w}^k)$.
+The new weights are determined by approximating the conditional probability of the particle given the observation:
+% \begin{equation*}
+% {W^k}{'} = \left.
+% \begin{cases}
+% \exp\left(- \frac{(\dot{x}'-\hat{\dot{x}}')^2}{2 \sigma_\text{vel}^2} \right) & \text{if } y' = \hat{y}' \\
+% \gamma_\text{lane} \exp\left(- \frac{(\dot{x}'-\hat{\dot{x}}')^2}{2 \sigma_\text{vel}^2} \right) & \text{o.w.}
+% \end{cases} \right\} \appropto \operatorname{Pr}\left(\left.\hat{\theta}^k \right| o \right)
+% \end{equation*}
+\begin{equation*}
+{W^k}{'} = \left.
+\begin{cases}
+    \max\left\{0, \frac{a - 2 \, \left| \dot{x}' - \hat{\dot{x}}' \right|}{a} \right\} & \text{if } y' = \hat{y}' \\
+\gamma_\text{lane} \max\left\{0, \frac{a - 2 \, \left| \dot{x}' - \hat{\dot{x}}' \right|}{a} \right\} & \text{o.w.}
+\end{cases} \right\} \appropto \operatorname{Pr}\left(\left.\hat{\theta}^k \right| o \right)
+\end{equation*}
+where $\dot{x}'$ and $y'$ are taken from the observation, $\hat{\dot{x}}'$ and $\hat{\dot{y}}'$ are from ${\hat{s}^k}{'}$, the max expression is proportional to the probability density of the acceleration noise triangular distribution (ignoring the effects of the collision mitigation modifications), and $\gamma_\text{lane} \in [0,1]$ is a hand-tuned parameter that penalizes incorrect lane changes (see \cref{tab:params}).
+
+% the below paragraph is not true anymore
+% In order to prevent particle deprivation, during the resampling step, Gaussian noise with standard deviation proportional to the sample standard deviation of the current particle set is added to \SI{10}{\percent} of the new samples.
+
+Model predictive control (MPC) is a widely used family of control techniques that use an imperfect model and feedback measurements to choose actions \cite{garcia1989model}. At each time step, a model predictive controller calculates a sequence of control actions that will maximize a reward function of the states visited up to a future horizon given that the system behaves according to a model. The first control action in this optimized sequence is executed, and the process is repeated after a new measurement is received.
+
+In the mean model predictive control (MMPC) approach, this particle filter is used to estimate the internal state for each driver. At each step, MPC uses the MDP that results from assuming that each driver has the internal state corresponding to the mean of the particles in the belief approximation as the model for planning. Each time a new observation is received, the particle filter is updated and MCTS-DPW determines the best action for the resulting MDP.
+
+\subsection{Approach 4: QMDP}
+
+The fourth approach uses MCTS-DPW to solve the QMDP approximation of the POMDP (see \cref{sec:qmdp}).
+
+\subsection{Approach 5: POMCPOW}
+
+The final approach uses the POMCPOW solver described in \cref{sec:pomcpow}.
+Though there is no theoretical guarantee that this approach will converge to an optimality, this is the closest approximation to the exact POMDP solution
+
 \section{Results}
+
+The computational results from this study are designed to meet the two goals of 1) quantifying the size of the gap between the baseline control algorithm and the maximum potential lane change performance and 2) showing which cases internal state estimation and POMDP planning can approach the upper bound on performance.
+Experiments are carried out in three scenarios, each with a different distribution of internal states.
+In each of these scenarios, each of the approaches described in \cref{sec:solution} are compared with an approximate upper performance bound obtained by planning with perfect knowledge of the behavior models.
+
+\subsection{Driver Model Distribution Scenarios} \label{sec:dist}
+
+For the numerical testing, three internal state distribution scenarios were considered.
+In all of these scenarios, drivers behave according to the IDM and MOBIL models presented in \cref{sec:driver}, however the IDM and MOBIL parameter values are distributed differently.
+
+\Cref{tab:modelparams} shows typical parameter values for aggressive, timid, and normal drivers.
+The values are taken from \citet{kesting2009agents}, but some have been adjusted slightly so that the parameters for the normal driver are exactly half way between values for the timid and aggressive drivers.
+In all three of the scenarios, the \emph{marginal} distributions of the parameters are uniformly distributed between the aggressive and timid values.
+The difference between the scenarios is the correlation of the parameter values.
+In Scenario 1, all of the parameters are independently distributed.
+In Scenario 2, all of the parameters are perfectly correlated so that all parameters are deterministic functions of the aggressiveness of the driver.
+Scenario 3 uses a distribution between these two extremes.
+In this scenario, values are drawn from a Gaussian copula with covariance matrix
+\begin{equation}
+    \Sigma = \begin{bmatrix}
+        1 & \dots & \rho \\
+        \vdots & \ddots & \vdots \\
+        \rho & \dots & 1
+    \end{bmatrix}\text{,}
+\end{equation}
+that is, a matrix with 1 along the diagonal and $\rho$ elsewhere.
+The values are then scaled and translated to lie between the aggressive and normal limits.
+For Scenario 3, the value of $\rho$ is \num{0.75}, and Scenarios 1 and 2 can be thought of as limiting cases where $\rho$ approaches 0 and 1, respectively.
+In Scenario 1, the first version of the particle filter, which estimates all of the model parameters jointly, is used, whereas in Scenarios 2 and 3, the second version of the particle filter that assumes fully correlated parameters is used, that is, it only estimates a single ``aggressiveness'' parameter for each car.
+The small scatter plots in \cref{fig:gaps,fig:075} illustrate the level of correlation by plotting sampled values of two of the parameters.
+
+\begin{table}[tbph]
+    \caption{IDM and MOBIL parameters for different driver types.}
+    \centering
+    \footnotesize
+    \begin{tabular}{@{}llrrr@{}}
+        \toprule
+        IDM Parameter & & \hspace{-3ex} Timid & Normal & Aggressive \\
+        \midrule
+        Desired speed (\si{\meter\per\second}) & $\dot{x}_0$ & 27.8 & 33.3 & 38.9 \\
+        Desired time gap (\si{\second}) & $T$ & 2.0  & 1.5 & 1.0 \\
+        Jam distance (\si{\meter})     & $g_0$ & 4.0  & 2.0 & 0.0 \\
+        Max acceleration (\si{\meter\per\second\squared}) & $a$ & 0.8  & 1.4 & 2.0 \\
+        Desired deceleration (\si{\meter\per\second\squared}) & $b$ & 1.0  & 2.0 & 3.0 \\
+        \midrule
+        MOBIL Parameter & & \hspace{-3ex} Timid & Normal & Aggressive \\
+        \midrule
+        Politeness & $p$ & 1.0 & 0.5 & 0.0 \\
+        Safe braking (\si{\meter\per\second\squared}) & $b_\text{safe}$ & 1.0 & 2.0 & 3.0 \\
+        Acceleration threshold (\si{\meter\per\second\squared}) & $a_\text{thr}$ & 0.2 & 0.1 & 0.0 \\
+        \bottomrule
+    \end{tabular}
+    \label{tab:modelparams}
+\end{table}
+
+\begin{table}[tbph]
+    \caption{Various simulation parameters}
+    \center
+    \begin{tabular}{@{}llr@{}}
+        \toprule
+            Parameter & Symbol & Value \\
+        \midrule
+            Simulation time step & $\Delta t$ & \SI{0.75}{\second} \\
+            Max vehicles on road & $N_\text{max}$ & \num{10} \\
+            Lane change rate & $\dot{y}_\text{lc}$ & \SI{0.67}{lanes\per\second} \\
+            Distance limit & $L$ & \SI{1000}{\meter} \\
+            Velocity noise standard deviation & $\sigma_\text{vel}$ & \SI{0.5}{\meter\per\second} \\
+            Physical braking limit & $b_\text{max}$ & \SI{8.0}{\meter\per\second\squared} \\
+            Penalized hard braking limit & $b_\text{hard}$ & \SI{4.0}{\meter\per\second\squared} \\
+            Penalized minimum speed & $\dot{x}_\text{slow}$ & \SI{15}{\meter\per\second} \\
+            UCT exploration parameter & $c$ & 8 \\
+            DPW linear parameter & $k$ & 4.5 \\
+            DPW exponent parameter & $\alpha$ & 0.1 \\
+            MCTS search depth & & 40 \\
+            MCTS iterations per step & & 1000 \\
+            Particle filter wrong lane factor & $\gamma_\text{lane}$ & 0.05 \\
+            Number of Particles (Joint Parameter Filter) & $M$ & 5000 \\
+            Number of Particles (Aggressiveness Filter) & $M$ & 2000 \\
+            Reward ratios for points on approximate Pareto curves & $\lambda$ & 0.5, 1, 2, 4, 8 \\
+        \bottomrule
+    \end{tabular}
+    \label{tab:params}
+\end{table}
+
+\subsection{Performance Results}
+
+\begin{figure}[p]
+    \centering
+    \begin{subfigure}{\textwidth}
+        \centering
+        \input{media/gaps_000.tex}
+        \vspace{-1em}
+        \caption{Scenario 1: Uncorrelated ($\rho=0$)} \label{fig:000}
+    \end{subfigure}\\
+    \begin{subfigure}{\textwidth}
+        \centering
+        \vspace{1cm}
+        \input{media/gaps_100.tex}
+        \vspace{-1em}
+        \caption{Scenario 2: Fully correlated ($\rho=1$)} \label{fig:100}
+        \vspace{1em}
+    \end{subfigure}
+    \caption[Performance curves at correlation extremes]{Approximate Pareto performance curves for model distributions at correlation extremes. The scatter plots at right illustrate the level of correlation with samples from the joint parameter distribution. Error bars indicate the standard error of the mean.}
+    \label{fig:gaps}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \input{media/gaps_075.tex}
+    \caption[Performance curves at correlation \num{0.75}]{Approximate Pareto performance curves for partially correlated model distribution (Scenario 3: $\rho=0.75$). Error bars indicate the standard error of the mean.}
+    \label{fig:075}
+\end{figure}
+
+
+\Cref{fig:gaps,fig:075} show approximate Pareto curves illustrating the performance in terms of safety and efficiency of each of the approaches described in \cref{sec:solution}.
+Each of the points on the curve shows the results of \num{5000} independent simulations of the scenario with the given safety-efficiency tradeoff weight, $\lambda$.
+
+\subsubsection{Control approach comparison}
+
+The baseline and upper bound approaches perform as expected.
+The baseline planner that assumes all vehicles act with normal behavior parameters creates over-confident plans.
+That is, it is able to reach the goal a large proportion of the time, but it causes many safety violations.
+On the other hand, the naive MDP approximation is over-cautious. 
+That is, it can attain a high level of safety, but it is never able to meet the goal more than \SI{80}{\percent} of the time.
+The omniscient upper bound planner achieves performance equal to or greater than all other approaches.
+
+As expected, better plans are attained as more accurate uncertainty is modeled in planning.
+The mean MPC approach usually performs better than the baselines because it estimates the model parameters based on the physical states it observes, but it is still overconfident (achieving a high success rate, but sacrificing safety) because it plans without any internal state uncertainty. 
+QMDP performs better than mean MPC because it considers samples from the entire estimated internal state distribution when planning.
+Since the vehicle does not have to take costly information-gathering actions to accomplish its goal, POMCPOW only rarely outperforms QMDP.
+
+\subsubsection{Convexity violations}
+
+One immediate concern that should be raised about the approximate Pareto frontiers in \cref{fig:gaps,fig:075} is that they are not all convex.
+In an optimization problem where the objective is a linear combination of several performance metrics, all optimal solutions for all possible linear combinations of objectives must lie on the boundary of their mutual convex hull (see \citet{boyd2004convex}, Example 2.27).
+% If a solution for a particular linear combination does not lie on this boundary, then another solution 
+% every optimal solution must lie on the boundary of the convex hull of the optimal solutions for all other linear combinations of metrics.
+% \txodo{Do I need to justify this more thoroughly?}
+Particularly egregious violations of convexity can be found in the mean MPC curve in \cref{fig:000} and the normal behavior assumption curve in \cref{fig:075}, where there are ``kinks'' at the third point from the top ($\lambda=2$) that prevent these curves from even being monotonic.
+
+The lack of convexity may be due to some combination of the following reasons:%
+\begin{enumerate}
+    \item The performance objectives plotted in the graphs do not exactly match the stepwise reward function \ref{eqn:reward}. For example, the planner observes a larger penalty if there are multiple safety violations, but this is not reflected in the plots.
+    \item The MCTS-DPW solution method is itself stochastic and has no guarantees of convergence in finite time.
+    \item The solvers are solving inaccurate approximations of the true POMDP problem (except, perhaps, for POMCPOW).
+\end{enumerate}
+
+One compelling explanation for the kinks mentioned above is that, as $\lambda$ is increased, since the planner is penalized more severely for unsafe actions, it plans a more conservative trajectory and stays on the road longer.
+The longer time on the road gives more chances for unsafe events to occur which are difficult for the planner to avoid because of its inaccurate model.
+This explanation is corroborated by the results in \cref{fig:bpkm}.
+In both places where there were previously kinks, the number of hard brakes per kilometer decreases as $\lambda$ increases.
+
+\begin{figure}[htpb]
+    \centering
+    \begin{subfigure}[b]{0.48\textwidth}
+        \begin{center}
+            \input{media/bpkm_100.tex}
+        \end{center}
+        \caption{Fully correlated ($\rho=1$)}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.48\textwidth}
+        \begin{center}
+            \input{media/bpkm_075.tex}
+        \end{center}
+        \caption{Partially correlated ($\rho=0.75$)}
+    \end{subfigure}
+    
+    \centering
+    \caption{Average hard braking frequency and success rate}
+    \label{fig:bpkm}
+\end{figure}
+
+
+\subsubsection{Correlation comparison}
+
+It is also interesting to consider the Affect that the correlation between model parameters has on the relative effectiveness of the control approaches.
+\Cref{fig:000} shows that when there is no correlation, QMDP offers a significant advantage over mean MPC, and POMCPOW offers a further significant advantage over QMDP.
+In this case, since the parameters are uncorrelated, there is a large amount of uncertainty in them even when some (e.g. $\dot{x}_0$) are easy to observe, and since POMCPOW is able to plan into the future considering this uncertainty, it performs better.
+On the other hand, when the parameters are fully correlated as shown in \cref{fig:100}, all of the parameters are easy to estimate by observing only a few, so there is not a significant performance gap between mean MPC, QMDP, and POMCPOW; all are able to close the gap and achieve nearly the same performance as the upper bound.
+\Cref{fig:075} shows the expected behavior between the extremes.
+
+\Cref{fig:corplot} shows the performance gaps at more points between $\rho=0$ and $1$.
+As the correlation increases, the approximate POMDP planning approaches get steadily closer to closing the performance gap with the upper bound.
+These results have significant implications for the real world.
+It suggests that if most human driver behavior is correlated with easily measurable quantities, near-optimal performance can be achieved by simpler approaches like mean MPC.
+If there is little correlation, planning with internal states offers a less pronounced benefit, and more advanced planners that carry the uncertainty further into the future are needed to realize that benefit.
+
+\begin{figure}[htbp]
+    \centering
+    % \includestandalone[mode=buildnew,width=0.5\textwidth]{media/corplot}
+    \input{media/corplot.tex}
+    \caption[Performance variation with $\Theta$ correlation]{Performance variation with $\Theta$ correlation. Success is defined as reaching the target lane within the distance limit without any unsafe actions. Error bars indicate the \SI{68}{\percent} (corresponding to one standard deviation in a normal distribution) confidence region determined by the Hoeffding Bound. The Naive MDP performance is not shown because it is significantly lower than the other approaches.}
+    \label{fig:corplot}
+\end{figure}
+
+\todo{add robustness study}

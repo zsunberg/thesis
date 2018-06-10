@@ -12,6 +12,7 @@
 % engineer - does an engineer thesis instead of a PhD dissertation
 
 %% load other packages you need
+% \usepackage{hyperref}
 \usepackage{amsmath}
 \usepackage{amsfonts}
 \usepackage{amssymb}
@@ -23,21 +24,82 @@
 \usepackage[noend]{algpseudocode}
 \usepackage{graphicx}
 \usepackage{subcaption}
-\usepackage{siunitx}
+\usepackage[per-mode=symbol]{siunitx}
 \usepackage{booktabs}
 \usepackage{xcolor}
+\usepackage{tabularx}
+\usepackage{rotating}
+\usepackage{todonotes}
+\usepackage{standalone}
+\usepackage{pgfplots}
+
+\pgfplotsset{every axis/.append style={font=\footnotesize,legend cell align=left}}
 
 \usepackage[natbib=true]{biblatex}
 \addbibresource{ref.bib}
+\addbibresource{behavior_ref.bib}
+\addbibresource{asl_main.bib}
+\addbibresource{new.bib}
+
+\sisetup{group-separator={,}}
 
 %% uncomment the following and create mythesis-macros.sty for all your
 %% own macros.  This keeps this top level file looking fairly neat.
 % \usepackage{mythesis-macros}
-\newcommand{\argmax}{\operatornamewithlimits{arg\,max}}
-\newcommand{\argmin}{\operatornamewithlimits{arg\,min}}
+\newcommand{\intrid}{\mathrm{i}}
+\newcommand{\ownid}{\mathrm{o}}
+\newcommand{\intr}[1]{\ensuremath{#1^{(\intrid)}}}
+\newcommand{\own}[1]{\ensuremath{#1^{(\ownid)}}} 
+\newcommand{\either}[1]{\ensuremath{#1^{(\cdot)}}}
+\newcommand{\is}{\ensuremath{\intr{s}}}
+\newcommand{\rs}{\ensuremath{\own{s}}}
+\newcommand{\psires}{\ensuremath{\own{\psi}_\mathrm{resolution}}}
+\newcommand{\psigoal}{\own{\psi}_\mathrm{goal}}
+\newcommand{\sterm}{\ensuremath{s_{\mathrm{term}}}}
+\newcommand{\tmin}{\ensuremath{t_{\min}}}
+\newcommand{\psicand}{\own{\psi}_{\mathrm{cand}}}
+\newcommand{\dgoal}{\ensuremath{D_\mathrm{goal}}}
+\newcommand{\dnmac}{\ensuremath{D_\mathrm{NMAC}}}
+\newcommand{\dev}{\ensuremath{\mathrm{dev }}}
+% \newcommand{\argmax}[1]{\underset{#1}{\operatornamewithlimits{argmax}}}
+% \newcommand{\argmin}[1]{\underset{#1}{\operatornamewithlimits{argmin}}}
+\newcommand{\real}{{\mathbb{R}}}
+\renewcommand{\natural}{{\mathbb{N}}}
+\newcommand{\naturals}{\natural}
+\newcommand{\Beta}{B}
+
+\newcommand{\beh}{\theta}
+\newcommand{\Beh}{\Theta}
+\newcommand{\phys}{\ensuremath{q}}
+\newcommand{\dt}{\ensuremath{\Delta t}}
+\newcommand{\bmax}{\ensuremath{b_\text{max}}}
+\newcommand{\ith}[1]{{#1}_i}
+\newcommand{\jth}[1]{{#1}_j}
+\newcommand{\ego}[1]{{#1}_e}
+\newcommand{\av}{ego} % used when referring to the ego vehicle in the text
+
+\newcommand{\diro}[1]{{#1}_\phi}
+\newcommand{\tdo}[1]{{#1}_{T\phi}}
+\newcommand{\trl}[1]{{#1}_{D}}
+
+% approximately proportional too
+\newcommand{\appropto}{\mathrel{\vcenter{
+  \offinterlineskip\halign{\hfil$##$\cr
+    \propto\cr\noalign{\kern2pt}\sim\cr\noalign{\kern-2pt}}}}}
+
+
+
+\newcommand{\argmax}{\operatornamewithlimits{argmax}}
+\newcommand{\argmin}{\operatornamewithlimits{argmin}}
 \newcommand{\reals}{\ensuremath{\mathbb{R}}}
-\newcommand{\obsspace}{\ensuremath{\mathcal{O}}}
-\newcommand{\obsdist}{\ensuremath{\mathcal{Z}}}
+\newcommand{\sspace}{\ensuremath{\mathcal{S}}}
+\newcommand{\aspace}{\ensuremath{\mathcal{A}}}
+\newcommand{\ospace}{\ensuremath{\mathcal{O}}}
+\newcommand{\tdist}{\ensuremath{\mathcal{T}}}
+\newcommand{\odist}{\ensuremath{\mathcal{Z}}}
+\newcommand{\reward}{\ensuremath{\mathcal{R}}}
+
+
 
 \newcommand{\result}[4]{% args mean, sem, color, len
     $#1\pm#2$ & {\color{green!#3!red}\rule{#4cm}{8pt}}
@@ -82,7 +144,7 @@
 Effective autonomous air and ground vehicles will need to maintain safety while accomplishing tasks efficiently in terms of time and other resources.
 Unfortunately, the objectives of safety and efficiency are fundamentally opposed because safety constraints prohibit some efficient actions.
 Moreover, the presence of uncertainty about the environment makes planning safe and efficient actions more difficult.
-Accurate models of this uncertainty coupled with effective planning algorithms can accomplish these goals.
+% Accurate models of this uncertainty coupled with effective planning algorithms can accomplish these goals.
 % The interaction between safety and efficiency for autonomous vehicles is made more difficult by the presence of uncertainty.
 % Planning with good models of this uncertainty allows the vehicle to make better decisions about which actions are safe and is a key to operating efficiently.
 
@@ -95,7 +157,7 @@ Specifically, it contains three contributions.
 The first chapter analyzes the use of a certifiable safety constraint alongside approximate optimization in the context of unmanned aerial vehicle (UAV) collision avoidance.
 UAV collision avoidance is challenging in particular because small unmanned vehicles often do not have the performance capability or legal permission to perform conventional altitude-based conflict resolution maneuvers, so they must perform more complex horizontal conflict resolution.
 In order to ensure safety, aerospace systems have particularly stringent certification requirements that likely preclude approximate randomized planning techniques capable of handling uncertainty.
-This work evaluates the performance price that comes with using a simple certified policy and shows that, again, MDP and POMDP optimization can significantly reduce that price and improve both safety and efficiency simultaneously.
+This work evaluates the performance price that comes with using a simple certified policy and shows that MDP and POMDP optimization can significantly reduce that price and improve both safety and efficiency simultaneously.
 
 The second chapter considers the effects of modeling uncertainty in a difficult lane changing task for a self-driving car.
 Specifically, the research estimates the value of planning with the internal states of other human drivers such as their intentions and dispositions.
