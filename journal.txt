@@ -1,3 +1,17 @@
+Tue 12 Jun 2018 06:03:16 PM PDT
+
+POMCPOW todo
+[X] Pictures for all domains
+[ ] Complete description for all domains
+    [/] LT
+    [/] SH
+[ ] Results summary
+[X] Move discretization study
+[X] Fix table of figures
+[X] Add Multilane to hyperparams
+
+[ ] Start on POMDPs.jl section
+
 Mon 22 Jan 2018 02:55:55 PM PST
 
 Questions:

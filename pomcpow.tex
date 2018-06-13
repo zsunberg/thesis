@@ -3,28 +3,44 @@
 \section{Background}
 
 Although the research surveyed in \cref{sec:solutions} has yielded effective solution techniques for many classes of POMDPs, there remains a need for simple, general purpose online solvers that can handle continuous spaces, especially continuous observation spaces.
-This chapter addresses that need.
+This chapter takes some first steps toward addressing that need.
 
-Many previous methods can easily handle continuous state spaces \cite{goldhoorn2014continuous}, but they must be modified to extend to domains with continuous action or observation spaces.
-Though DESPOT has demonstrated effectiveness on some large problems, since it uses unweighted particle beliefs in its search tree, it struggles with continuous information gathering problems as will be shown in \cref{sec:experiments}.
-ABT has been extended to use generalized pattern search for selecting locally optimal continuous actions, an approach which is especially effective in problems where high precision is important \cite{seiler2015online}, but also uses unweighted particle beliefs.
+POMCP and other online methods can easily accomodate continuous state spaces without any modification \cite{goldhoorn2014continuous}.
+However, there has been less progress on problems with continuous observation spaces.
+This chapter presents two similar algorithms which address the challenge of solving POMDPs with continuous state, action, and observation spaces.
+The first is based on POMCP and is called partially observable Monte Carlo planning with observation widening (POMCPOW). 
+The second solves the belief-space MDP and is called particle filter trees with double progressive widening (PFT-DPW).
+
+\begin{figure}[htb]
+\begin{center}
+    \includegraphics[width=0.9\columnwidth]{media/continuous_tree.pdf}
+\end{center}
+\caption[POMCP tree on a continuous observation space]{POMCP tree for a discrete POMDP (left), and for a POMDP with a continuous observation space (right). Because the observation space is continuous, each simulation creates a new observation node and the tree cannot extend deeper.}
+\label{fig:ctree}
+\end{figure}
+
+There are two challenges that make tree search difficult in continuous spaces.
+The first is that, since the probability of sampling the same real number twice from a continuous random variable is zero, the width of the planning trees explodes on the first step, causing them to be too shallow to be useful (see \cref{fig:ctree}).
+POMCPOW and PFT-DPW resolve this issue with a technique called double progressive widening (DPW) \cite{couetoux2011double}. 
+The second issue is that, even when DPW is applied, the belief representations used by current solvers collapse to a single state particle, resulting in overconfidence.
+As a consequence, the solutions obtained resemble QMDP policies, and there is no incentive for information gathering.
+POMCPOW and PFT-DPW overcome this issue by using the observation model to weight the particles used to represent beliefs.
+
+A small amount of previous research has sought online solutions to continuous POMDPs.
+ABT has been extended to use generalized pattern search for selecting locally optimal continuous actions, an approach which is especially effective in problems where high precision is important \cite{seiler2015online}.
 Continuous observation Monte Carlo tree search (COMCTS) constructs observation classification trees to automatically partition the observation space in a POMCP-like approach, however it did not perform much better than a Monte Carlo rollout approach in experiments \cite{pas2012simulation}.
 
-The algorithms discussed in this chapter are derivatives of the partially observable Monte Carlo planning algorithm (POMCP), which is based on MCTS (\cref{sec:mcts}).
-A conceptually straightforward way to solve a POMDP using MCTS is to apply it to the corresponding belief MDP.
-Indeed, many tree search techniques have been applied to POMDP problems in this way \cite{ross2008online}.
-However, when the Bayesian belief update is used, this approach is computationally expensive.
-POMCP and its successors, DESPOT and ABT, can tackle problems many times larger than their predecessors because they use state trajectory simulations, rather than full belief trajectories, to build the tree.
+\section{Algorithms}
 
-Each of the nodes in a POMCP tree corresponds to a history proceeding from the root belief and terminating with an action or observation.
-In the search phase of POMCP tree construction, state trajectories are simulated through this tree.
-At each action node, the rewards from the simulations that pass through the node are used to estimate the $Q$ function.
-This simple approach has been shown to work well for large discrete problems \cite{silver2010pomcp}.
-However, when the action or observation space is continuous, the tree degenerates and does not extend beyond a single layer of nodes because each new simulation produces a new branch.
+This section presents and discusses several methods for handling continuous POMDPs.
+First, it presents three new MCTS-DPW-based algorithms.
+The first of these is POMCP-DPW.
+\Cref{thm:qmdp} shows that this algorithm is suboptimal in some cases.
+The second algorithm is PFT-DPW, a straightforward application of MCTS-DPW to the belief MDP with particle filters to approximate belief updates.
+The third algorithm is POMCPOW, which fixes the problems noted about POMCP-DPW and successfully extends POMCP to problems with continuous observation spaces.
+These three algorithms are followed by brief discussion about the discretization alternative to these algorithms and the additional observation distribution requirement of POMCPOW and PFT-DPW.
 
-\section{Structure and Notation}
-
-The three algorithms in this section share a common structure.
+The three new algorithms in this chapter share a common structure.
 For all algorithms, the entry point for the decision making process is the \textproc{Plan} procedure, which takes the current belief, $b$, as an input (\textproc{Plan} differs slightly for PFT-DPW in \cref{alg:pft}).
 The algorithms also share the same \textproc{ActionProgWiden} function to control progressive widening of the action space.
 These components are listed in Listing \ref{alg:common}.
@@ -38,10 +54,10 @@ $N$ is a count of the number of visits; and $M$ is a count of the number of time
 The list of states associated with a node is denoted $B$, and $W$ is a list of weights corresponding to those states.
 Finally, $Q(ha)$ is an estimate of the value of taking action $a$ after observing history $h$.
 $C$, $N$, $M$, $B$, $W$, and $Q$ are all implicitly initialized to \num{0} or $\emptyset$.
-The \textproc{Rollout} procedure, runs a simulation with a default rollout policy, which can be based on the history or fully observed state for $d$ steps and returns the discounted reward.
+The \textproc{Rollout} procedure, runs a simulation with a default rollout policy, which can be based on the history or fully observed state, for $d$ steps and returns the discounted reward.
 
 % TODO algorithm vs listing numbering
-\begin{algorithm}[t]
+\begin{algorithm}[htbp]
     \floatname{algorithm}{Listing}
     \caption{Common procedures} \label{alg:common}
     \begin{algorithmic}[1]
@@ -65,14 +81,14 @@ The \textproc{Rollout} procedure, runs a simulation with a default rollout polic
 \end{algorithm}
 
 
-\section{POMCP-DPW}
+\subsection{POMCP-DPW}
 
 The first algorithm that we consider is POMCP with double progressive widening (POMCP-DPW).
 In this algorithm, listed in \cref{alg:pomcpdpw}, the number of new children sampled from any node in the tree is limited by DPW using the parameters $k_a$, $\alpha_a$, $k_o$, and $\alpha_o$.
 In the case where the simulated observation is rejected (line~\ref{lin:notnew}), the tree search is continued with an observation selected in proportion to the number of times, $M$, it has been previously simulated (line~\ref{lin:selecto}) and a state is sampled from the associated belief (line~\ref{lin:samples}).
 
 \setcounter{algorithm}{0}
-\begin{algorithm}
+\begin{algorithm}[htbp]
     \caption{POMCP-DPW} \label{alg:pomcpdpw}
     \begin{algorithmic}[1]
         \Procedure {Simulate}{$s$, $h$, $d$}        
@@ -129,7 +145,7 @@ exponentially surely in $n$, for every action $a$.
 \end{restatable}
 % \end{theorem}
 
-A proof of this theorem that leverages work by \citet{auger2013continuous} is given in \cref{sec:proof}, but we provide a brief justification here.
+A proof of this theorem that leverages work by \citet{auger2013continuous} is given in \cref{sec:proof}, but I will provide a brief justification here.
 The key is that belief nodes will contain only a single state particle (see \cref{fig:treecomp}).
 This is because, since the observation space is continuous with a finite density function, the generative model will (with probability one) produce a unique observation $o$ each time it is queried.
 Thus, for every generated history $h$, only one state will ever be inserted into $B(h)$ (line~\ref{lin:insertion}, \cref{alg:pomcpdpw}), and therefore $h$ is merely an alias for that state. 
@@ -142,7 +158,7 @@ For many problems this is a very useful solution,\footnote{Indeed, a useful onli
 Although \cref{thm:qmdp} is only theoretically applicable to the modified version of POMCP-DPW, it helps explain the behavior of other solvers.
 Modified POMCP-DPW, POMCP-DPW, DESPOT, and ABT all share the characteristic that a belief node can only contain two states if they generated exactly the same observation.
 Since this is an event with zero probability for a continuous observation space, these solvers exhibit suboptimal, often QMDP-like, behavior.
-The experiments in \cref{sec:experiments} show this for POMCP-DPW and DESPOT, and this is presumably the case for ABT as well.
+The experiments in \cref{sec:discgran} show this for POMCP-DPW and DESPOT, and this is presumably the case for ABT as well.
 
 
 \begin{figure}[htpb]
@@ -157,11 +173,11 @@ The experiments in \cref{sec:experiments} show this for POMCP-DPW and DESPOT, an
         \includegraphics[width=\textwidth]{media/pomcpow_tree.pdf}
         \caption{POMCPOW Tree}
     \end{subfigure}
-    \caption{Tree Structure Comparison. Each square is an action node, and each unfilled circle is an observation node. Each black dot corresponds to a state particle with the size representing its weight. In continuous observation spaces, the beliefs in a POMCP-DPW tree degenerate to a single particle, while POMCPOW maintains weighted particle mixture beliefs.}
+    \caption[POMCP-DPW and POMCPOW tree structure comparison]{Tree structure comparison. Each square is an action node, and each unfilled circle is an observation node. Each black dot corresponds to a state particle with the size representing its weight. In continuous observation spaces, the beliefs in a POMCP-DPW tree degenerate to a single particle, while POMCPOW maintains weighted particle mixture beliefs.}
     \label{fig:treecomp}
 \end{figure}
 
-\section{PFT-DPW}
+\subsection{PFT-DPW}
 
 Another algorithm that one might consider for solving continuous POMDPs online is MCTS-DPW on the equivalent belief MDP.
 Since the Bayesian belief update is usually computationally intractable, a particle filter is used.
@@ -175,10 +191,10 @@ This distinction also allows it to be applied to problems where the reward is a 
 The primary shortcoming of this algorithm is that the number of particles in the filter, $m$, must be chosen a-priori and is static throughout the tree.
 Each time a new belief node is created, an $\mathcal{O}(m)$ particle filter update is performed.
 If $m$ is too small, the beliefs may miss important states, but if $m$ is too large, constructing the tree is expensive.
-Fortunately, the experiments in \cref{sec:experiments} show that it is often easy to choose $m$ in practice; for all the problems we studied, a value of $m=20$ resulted in good performance.
+Fortunately, the experiments in \cref{sec:experiments} show that it is often easy to choose $m$ in practice; for all the problems studied here, a value of $m=20$ resulted in good performance.
 
 
-\begin{algorithm}
+\begin{algorithm}[htbp]
     \caption{PFT-DPW} \label{alg:pft}
     \begin{algorithmic}[1]
         \Procedure{Plan}{$b$}
@@ -210,7 +226,7 @@ Fortunately, the experiments in \cref{sec:experiments} show that it is often eas
 
 \subsection{POMCPOW} \label{sec:pomcpow}
 
-\begin{algorithm}[t]
+\begin{algorithm}[htbp]
     \caption{POMCPOW} \label{alg:pomcpow}
     \begin{algorithmic}[1]
         \Procedure {Simulate}{$s$, $h$, $d$}        
@@ -252,35 +268,9 @@ Because the resampling in line~\ref{lin:sample} can be efficiently implemented w
 
 \subsection{Discretization} \label{sec:discretization}
 
-Discretization is perhaps the most straightforward way to deal with continuous observation spaces. The results in \cref{tab:experiments} show that this approach is only sometimes effective.
-\Cref{fig:disc} shows the performance at different discretization granularities for the Light Dark and Sub Hunt problems.
-
-Since the Light Dark domain has only a single observation dimension, it is easy to discretize.
-In fact, POMCP with fine discretization outperforms POMCPOW.
-However, discretization is only effective at certain granularities, and this is highly dependent on the solver and possibly hyperparameters.
-In the Sub Hunt problem, with its high-dimensional observation, discretization is not effective at any granularity.
-In Van Der Pol tag, both the action and observation spaces must be discretized.
-Due to the high dimensionality of the observation space, similar to Sub Hunt, no discretization that resulted in good performance was found.
-
-\begin{figure}[htb]
-    \centering
-    \begin{subfigure}{\linewidth}
-        \centering
-        \includegraphics[width=0.8\linewidth]{media/ld_discretization.pdf}
-        \caption{Light Dark} \label{fig:lddisc}
-    \end{subfigure}
-
-    \begin{subfigure}{\linewidth}
-        \centering
-        \includegraphics[width=0.72\linewidth]{media/subhunt_discretization.pdf}
-        \caption{Sub Hunt}
-        \label{fig:shdisc}
-    \end{subfigure}
-
-    \caption{Discretization granularity studies} \label{fig:disc}
-\end{figure}
-
-
+Discretization is perhaps the most straightforward way to deal with continuous observation spaces.
+In this approach, the continuous observation space is simply divided into small discrete regions and solved as a discrete POMDP using conventional methods.
+The results in \cref{tab:experiments} show that this approach is only sometimes effective.
 
 \subsection{Observation Distribution Requirement}
 
@@ -311,13 +301,20 @@ Numerical simulation experiments were conducted to evaluate the performance of P
 
 \subsection{Laser Tag}
 
-The Laser Tag benchmark is taken directly from the work of \citet{somani2013despot} and included for the sake of calibration. DESPOT outperforms the other methods. The score for DESPOT differs slightly from that reported by \citet{somani2013despot} likely because of bounds implementation differences.
+The Laser Tag benchmark (\cref{fig:lasertag}) is taken directly from the work of \citet{somani2013despot} and included for the sake of calibration. A complete description is given in that work. DESPOT outperforms the other methods in this test. The score for DESPOT differs slightly from that reported by \citet{somani2013despot} likely because of bounds implementation differences.
 POMCP performs much better than reported by \citet{somani2013despot} because this implementation uses a state-based rollout policy.
+
+\begin{figure}[htpb]
+    \centering
+    \includegraphics[width=0.6\linewidth]{media/lasertag.png}
+    \caption[Laser Tag benchmark]{Laser Tag benchmark. The green square is the robot; the orange square is the target. The varying shades of yellow show the belief about the position of the target. The red dashed lines represent the laser sensors.}
+    \label{fig:lasertag}
+\end{figure}
 
 \subsection{Light Dark}
 
-In the Light Dark domain, the state is an integer, and the agent can choose how to move deterministically ($s' = s+a$) from the action space $\mathcal{A}=\{-10, -1, 0, 1, -10\}$. 
-The goal is to reach the origin.
+In the Light Dark domain, the state is an integer between $-60$ and $60$, and the agent can choose how to move deterministically ($s' = s+a$) from the action space $\mathcal{A}=\{-10, -1, 0, 1, 10\}$. 
+The goal is to reach the origin and take an action there.
 If action $0$ is taken at the origin, a reward of $100$ is given and the problem terminates; If action $0$ is taken at another location, a penalty of $-100$ is given.
 There is a cost of $-1$ at each step before termination.
 The agent receives a more accurate observation in the ``light'' region around $s=10$.
@@ -331,8 +328,8 @@ In this one-dimensional case, discretization allows POMCP to outperform all othe
 \begin{figure}[htb]
     \centering
     % \input{ld_fig.pgf}
-    \includegraphics[width=\columnwidth]{media/ld_fig.pdf}
-    \caption{Example trajectories in the Light Dark domain. POMCPOW travels to the light region and accurately localizes before moving to the goal. POMCP-DPW displays QMDP-like behavior: it is unable to localize well enough to take action \num{0} with confidence. The belief particles far away from \num{0} in the POMCP-DPW plot are due to particle reinvigoration that makes the filter more robust.}
+    \includegraphics[width=0.6\columnwidth]{media/ld_fig.pdf}
+    \caption[Light Dark problem]{Example trajectories in the Light Dark domain. POMCPOW travels to the light region and accurately localizes before moving to the goal. POMCP-DPW displays QMDP-like behavior: it is unable to localize well enough to take action \num{0} with confidence. The belief particles far away from \num{0} in the POMCP-DPW plot are due to particle reinvigoration that makes the filter more robust.}
     \label{fig:ld}
 \end{figure}
 
@@ -355,20 +352,29 @@ The optimal strategy includes using the active sonar, but previous approaches ha
 The PFT-DPW approach has the best score, followed closely by POMCPOW.
 All other solvers have similar performance to QMDP.
 
+\begin{figure}[htpb]
+    \centering
+    \includegraphics[width=0.6\linewidth]{media/subhunt.png}
+    \caption[Sub Hunt problem]{Sub Hunt benchmark. The color of each location square shows the number of belief particles containing the target at that location. In this case, the sub has incorrectly concluded that, with high probability, the target is moving towards the east and is chasing that belief concentration.}
+    \label{fig:subhunt}
+\end{figure}
+
 
 \subsection{Van Der Pol Tag} \label{sec:vdptag}
 
 \begin{figure}[bth]
-    \centering
-    \begin{minipage}{0.5\linewidth}
+    \begin{subfigure}{0.48\linewidth}
         \centering
-        \includegraphics[width=0.8\linewidth]{media/vdp_quiver.pdf}
-    \end{minipage}
+        \includegraphics[height=2in]{media/vdp_quiver.pdf}
+        \caption{Van Der Pol Dynamics. The arrows show the target differential equation, and the thick black lines represent the barriers.}
+    \end{subfigure}
     \hfill
-    \begin{minipage}[c]{0.45\linewidth}
-        \caption{Van Der Pol tag problem. The arrows show the target differential equation, and the thick black lines represent the barriers.}
-        \label{fig:vdp}
-    \end{minipage}
+    \begin{subfigure}{0.48\linewidth}
+        \includegraphics[height=2in]{media/vdptag.png}
+        \caption{Van Der Pol Tag. The agent attempts to tag the target, but cannot pass through barriers.}
+    \end{subfigure}
+    \caption[Van Der Pol tag problem]{Van Der Pol tag problem}
+    \label{fig:vdp}
 \end{figure}
 
 
@@ -395,43 +401,75 @@ Second, the continuous state space and obstacles make it difficult to construct 
 \Cref{tab:experiments} shows the mean reward for $1000$ simulations of this problem for each solver.
 Since a POMCPOW iteration requires less computation than a PFT-DPW iteration, POMCPOW simulates more random rollouts and thus performs slightly better.
 
-\todo{Add Multilane Section}
+\subsection{Multilane}
+
+The final problem for evaluation is the multiple-lane-change problem described in \cref{sec:multilanepomdp}.
+Since costly information gathering is not an important part of this problem, POMCP-DPW and POMCPOW have similar performance.
+Because it uses a fixed number of scenarios and bounds to control exploration rather than progressive widening and a UCB heuristic, DESPOT is able to make better long term plans and is the most effective in this problem.
+It is also important to note that in this problem, the most realistic of the test problems, PFT-DPW performs significantly worse than POMCPOW.
+
+\subsection{Discretization granularity} \label{sec:discgran}
+
+\Cref{fig:disc} shows the performance at different discretization granularities for the Light Dark and Sub Hunt problems.
+
+Since the Light Dark domain has only a single observation dimension, it is easy to discretize.
+In fact, POMCP with fine discretization outperforms POMCPOW.
+However, discretization is only effective at certain granularities, and this is highly dependent on the solver and possibly hyperparameters.
+In the Sub Hunt problem, with its high-dimensional observation, discretization is not effective at any granularity.
+In Van Der Pol tag, both the action and observation spaces must be discretized.
+Due to the high dimensionality of the observation space, similar to Sub Hunt, no discretization that resulted in good performance was found.
+
+\begin{figure}[htb]
+    \centering
+    \begin{subfigure}{0.48\linewidth}
+        \centering
+        \includegraphics[width=0.97\linewidth]{media/ld_discretization.pdf}
+        \caption{Light Dark} \label{fig:lddisc}
+    \end{subfigure}
+    \begin{subfigure}{0.48\linewidth}
+        \centering
+        \includegraphics[width=0.9\linewidth]{media/subhunt_discretization.pdf}
+        \caption{Sub Hunt}
+        \label{fig:shdisc}
+    \end{subfigure}
+
+    \caption{Discretization granularity studies} \label{fig:disc}
+\end{figure}
+
 
 \subsection{Hyperparameters} \label{sec:hyper}
 
-\begin{table}[t]
+\begin{table}[htbp]
     {\centering
 \caption{Hyperparameters used in experiments} \label{tab:hyper}
 
 \begin{center}
-\begin{tabular}{lrrrr}
+\begin{tabular}{lrrrrr}
     \toprule
-                & Laser Tag     & Light Dark    & Sub Hunt      & VDP Tag \\
+    POMCPOW     & Laser Tag     & Light Dark    & Sub Hunt      & VDP Tag     & Multilane \\
     \midrule
-    \multicolumn{3}{l}{POMCPOW} \\
+    $c$         & \num{26.0}    & \num{90.0}    & \num{17.0}    & \num{110.0} & \num{8.0} \\
+    $k_a$       & --            & --            & --            & \num{30.0}  & -- \\
+    $\alpha_a$  & --            & --            & --            & \num{1/30}  & -- \\
+    $k_o$       & \num{4.0}     & \num{5.0}     & \num{6.0}     & \num{5.0}   & \num{4.5} \\
+    $\alpha_o$  & \num{1/35}    & \num{1/15}    & \num{1/100}   & \num{1/100} & \num{1/10} \\
     \midrule
-    $c$         & \num{26.0}    & \num{90.0}    & \num{17.0}    & \num{110.0} \\
-    $k_a$       & --            & --            & --            & \num{30.0}  \\
-    $\alpha_a$  & --            & --            & --            & \num{1/30}  \\
-    $k_o$       & \num{4.0}     & \num{5.0}     & \num{6.0}     & \num{5.0}   \\
-    $\alpha_o$  & \num{1/35}    & \num{1/15}    & \num{1/100}   & \num{1/100} \\
+    PFT-DPW     & Laser Tag     & Light Dark    & Sub Hunt      & VDP Tag     & Multilane \\
     \midrule
-    \multicolumn{3}{l}{PFT-DPW} \\
-    \midrule
-    $m$         & \num{20}      & \num{20}      & \num{20}      & \num{20}    \\
-    $c$         & \num{26.0}    & \num{100.0}   & \num{100.0}   & \num{70.0}  \\
-    $k_a$       & --            & --            & --            & \num{20.0}  \\
-    $\alpha_a$  & --            & --            & --            & \num{1/25}  \\
-    $k_o$       & \num{4.0}     & \num{4.0}     & \num{2.0}     & \num{8.0}   \\
-    $\alpha_o$  & \num{1/35}    & \num{1/10}    & \num{1/10}    & \num{1/85}  \\
-    \midrule
+    $m$         & \num{20}      & \num{20}      & \num{20}      & \num{20}    & \num{15} \\
+    $c$         & \num{26.0}    & \num{100.0}   & \num{100.0}   & \num{70.0}  & \num{8.0} \\
+    $k_a$       & --            & --            & --            & \num{20.0}  & -- \\
+    $\alpha_a$  & --            & --            & --            & \num{1/25}  & -- \\
+    $k_o$       & \num{4.0}     & \num{4.0}     & \num{2.0}     & \num{8.0}   & \num{4.5} \\
+    $\alpha_o$  & \num{1/35}    & \num{1/10}    & \num{1/10}    & \num{1/85}  & \num{1/10} \\
+    \bottomrule
 
 \end{tabular}
+
+    \vspace{1mm}
+    \footnotesize{For problems with discrete actions, all actions are considered and $k_a$ and $\alpha_a$ are not needed.}
 \end{center}
     }
-    \vspace{1mm}
-
-    \footnotesize{For problems with discrete actions, all actions are considered and $k_a$ and $\alpha_a$ are not needed.}
 \end{table}
 
 Hyperparameters for POMCPOW and PFT-DPW were chosen using the cross entropy method \cite{mannor2003cross}, but exact tuning was not a high priority and some parameters were re-used across solvers so the parameters may not be perfectly optimized.
@@ -442,4 +480,19 @@ The values for the observation widening parameters, $k_o$ and $\alpha_o$, were s
 A small $\alpha_o$ essentially limits the number of observations to a static number $k_o$, resulting in behavior reminiscent of sparse UCT \cite{browne2012survey}, preventing unnecessary widening and allowing the tree to grow deep.
 This seems to work well in practice with the branching factor ($k_o$) set to values between \num{2} and \num{8}, and suggests that it may be sufficient to limit the number of children to a fixed number rather than do progressive widening in a real implementation.
 
+\section{Summary}
 
+The results in this chapter clearly show that the previous leading online solvers are unable to adequately solve POMDPs with continuous observation spaces where exploration is important.
+In particular, \cref{thm:qmdp} explains why these methods behave similarly to QMDP.
+POMCPOW and PFT-DPW overcome this limitation and outperform QMDP.
+Though POMCPOW only performs strictly best on one of the problems in \cref{sec:experiments}, it performs very well on all of them, so it might be considered the best overall algorithm in these tests.
+
+However there are still several shortcomings.
+First, I have not proven analytically that POMCPOW or PFT-DPW converges toward the optimal solution.
+% , and, given the complexity of the proof for DPW in the fully-observable case \cite{auger2013continuous}, this seems to be a relatively challenging task.
+Second, double progressive widening is made more difficult in practice because of its tuning parameters.
+Third, the results from the Multilane experiment shows that DESPOT is able to find significantly better plans in more realistic problems.
+Thus, much work remains along this trajectory.
+DESPOT has several attractive attributes compared to the new algorithms presented here.
+In particular, its use of a fixed number of scenarios to control widening, and bounds to control exploration may make it more amenable to analysis and allow it to perform better in practice.
+Extending DESPOT to handle continuous observation spaces seems to be a promising future direction.

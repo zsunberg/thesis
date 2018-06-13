@@ -373,7 +373,7 @@ with nodes regularly spaced along the distance between the UAV and the goal and 
 
 \section{Results} \label{sec:results}
 
-This section presents results from numerical experiments that illustrate the effectiveness of our approach. The experiments are designed to compare the four approaches discussed in \cref{sec:uavintro}: the ``static TRL'' approach, ``direct optimization'', and the new ``optimized TRL'' and ``trusted direct optimization'' approaches proposed in this chapter. The static TRL law uses the TRL described in \cref{alg:trl} with a constant value for the separation distance (denoted with $\bar{D}$), while the other approaches use the approximate optimization procedure described in \cref{sec:approach}. The various parameters used in the numerical experiments are listed in \cref{tab:params}.
+This section presents results from numerical experiments that illustrate the effectiveness of our approach. The experiments are designed to compare the four approaches discussed in \cref{sec:uavintro}: the ``static TRL'' approach, ``direct optimization'', and the new ``optimized TRL'' and ``trusted direct optimization'' approaches proposed in this chapter. The static TRL law uses the TRL described in \cref{alg:trl} with a constant value for the separation distance (denoted with $\bar{D}$), while the other approaches use the approximate optimization procedure described in \cref{sec:approach}. The various parameters used in the numerical experiments are listed in \cref{tab:uparams}.
 
 \subsection{Policies}
 
@@ -440,7 +440,7 @@ Of these simulations, \num{1009} result in a NMAC if the UAV follows its nominal
 The fraction of collisions avoided is estimated using a separate set of \num{10000} simulations. Each of these simulations has an initial condition in the same region described above, but initial conditions and noise trajectories are chosen by filtering random trials so that each of the simulations \emph{will result in a NMAC if the own UAV follows its nominal path}.
 
 \begin{table}[tb]
-    \caption{Parameters for numerical experiments} \label{tab:params}
+    \caption{Parameters for numerical experiments} \label{tab:uparams}
     \centering
     \begin{tabular}{p{0.6\columnwidth} l r}
         \toprule

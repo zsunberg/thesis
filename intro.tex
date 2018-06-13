@@ -163,10 +163,15 @@ In particular, \citet{agha2011firm} present a method to take advantage of the ex
 \citet{van2012motion} perform local optimization with respect to uncertainty on a pre-computed path, and \citet{indelman2015planning} devise a hierarchical approach that handles uncertainty in both the robot's state and the surrounding environment.
 
 General purpose online algorithms for POMDPs have also been proposed.
-Many early online algorithms focused on point-based belief tree search with heuristics for expanding the trees \cite{ross2008online}.
-The introduction of POMCP \cite{silver2010pomcp} caused a pivot toward the simple and fast technique of using the same simulations for decision-making and using beliefs implicitly represented as unweighted collections of particles.
+These algorithms are mostly derivatives of the MCTS algorithm for MDPs (\cref{sec:mcts}).
+A conceptually straightforward way to solve a POMDP using MCTS is to apply it to the corresponding belief MDP.
+Indeed, many tree search techniques have been applied to POMDP problems in this way \cite{ross2008online}.
+However, when the Bayesian belief update is used, this approach is computationally expensive.
+POMCP can tackle problems many times larger than its predecessors because it uses state trajectory simulations, rather than full belief trajectories, to build the tree.
 Determinized sparse partially observable tree (DESPOT) is a similar approach that attempts to achieve better performance by analyzing only a small number of random outcomes in the tree \cite{somani2013despot}.
 Adaptive belief tree (ABT) was designed specifically to accommodate changes in the environment without having to replan from scratch \cite{kurniawati2016online}.
+
+\todo{Add POMCP section(?), or at least specifics}
 
 \subsection{QMDP} \label{sec:qmdp}
 

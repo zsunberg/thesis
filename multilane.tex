@@ -13,7 +13,7 @@ One approach to improve interaction would be to program ad-hoc logic for each si
 However, this approach is time-consuming and error prone, and edge cases that the programmers have not foreseen can present a safety risk.
 Furthermore, this approach limits the performance of the system to the capability of the human programmer.
 In contrast, artificial intelligence and machine learning techniques have the potential to provide a more robust approach to such decision-making tasks.
-This chapter explores techniques based on Markov decision processes (MDPs) and partially observable Markov decision processes (POMDPs) \cite{Kochenderfer2015}.
+This chapter explores MDP and POMDP techniques.
 
 POMDPs are particularly well suited for modeling decisions for autonomous vehicles because they explicitly capture the limitations of the vehicle's sensors in measuring the relevant state variables \cite{brechtel2013mcvi, sadigh2016gathering, bai2015intention}.
 Though sensors can accurately measure many of the relevant variables pertaining to the physical state of the vehicles, the internal state (e.g., intentions and aggressiveness) of other drivers and road users can only be indirectly inferred \cite{sadigh2016gathering, bai2015intention, lam2015, dc2015}.
@@ -29,7 +29,7 @@ For this research, I chose to investigate these ideas in the context of making l
 I present a method for quantifying the performance gains that could result from perfect estimation of and planning with hidden behavior model parameters.
 In addition, I show that when model parameters are correlated, estimating the parameters online using physical measurements can greatly improve performance. Planning using a POMDP problem formulation that dynamically takes uncertainty into account can further improve performance.
 
-\section{Freeway Driving POMDP}
+\section{Freeway Driving POMDP} \label{sec:multilanepomdp}
 
 The focus of this chapter is on freeway driving.
 I investigate a scenario in which a vehicle must navigate from the rightmost to the leftmost lane of a four lane freeway within a specified distance while maintaining safety and comfort (see \cref{fig:scene}).
@@ -144,7 +144,7 @@ The braking action is $(\ego{\ddot{x}}, \ego{\ddot{y}}) = (\min \{a_\text{max}, 
     \centering
     \includestandalone[mode=buildnew,width=0.5\textwidth]{action_space}
     
-    \caption{Ego action space}
+    \caption{Lane changing action space}
     \label{fig:actions}
 \end{figure}
 
