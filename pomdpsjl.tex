@@ -28,23 +28,27 @@ Thus, a good POMDP framework should have first-class support for MDPs in additio
 \subsubsection{Continuous and discrete problems}
 
 Some POMDPs have a finite number of states, actions, and observations, i.e. $|\sspace| < \infty$, $|\aspace| < \infty$, and $|\ospace| < \infty$.
-However, many real world problems, notably robotics problems, are naturally formulated in spaces with uncountably infinite cardinality, e.g. $\sspace = \reals$, $\aspace = \reals$, and $\ospace = \reals$, or multi-dimensional vector spaces, e.g. $\sspace = \reals^6$
-This means that the framework cannot be constrained to use integers for state representation, but should be capable of using floating point vectors.
+However, many real world problems, notably robotics problems, are naturally formulated in spaces with uncountably infinite cardinality, e.g. $\sspace = \reals$, $\aspace = \reals$, and $\ospace = \reals$, multi-dimensional vector spaces, e.g. $\sspace = \reals^6$, or hybrid continuous-discrete spaces.
+This means that the framework must not be constrained to use integers for state representation, but should be capable of using a range of structures including floating point numbers and arrays.
 
 \subsubsection{Explicit vs generative model representation}
 
-The explicit
+Some POMDP and MDP solution techniques use the explicit probability distributions $\tdist$ and $\odist$ to solve problems.
+Thus, a successful framework must include a way to explicitly specify $\tdist$ and $\odist$.
+On the other hand, explicitly specifying $\tdist$ and $\odist$ for many realistic problems is exceedingly difficult and tedious, and specifying a generative model is the only practical way to encode the problem.
+Thus, a successful framework must also include generative model support.
 
 \subsubsection{Online and offline solvers}
 
 While some POMDP solution techniques seek exact offline solutions to small problems, many larger problems can only be practically solved online.
-Thus a good POMDP framework must have first class support for both solving offline and efficiently executing a policy online or executing a planner that does significant computation online.
+Thus a good POMDP framework must have first class support for solving offline and efficiently executing a policy online or executing a planner that does significant computation online.
 
 \subsubsection{Policy representation}
 
-The policies that 
+The policies that different solution techniques yield can take a variety of forms.
+Exact solution techniques typically attempt to find alpha vectors that encode an optimal policy \cite{kaelbling1998planning,kurniawati2008sarsop}, whereas others use finite state machines \cite{bai2010mcvi}.
+Newer methods may use neural networks \cite{karkus2017qmdp} or other structures to store policies, so a successful framework must provide a flexible way to represent all of these structures.
 
-\subsubsection{Exact and approximate solutions}
 
 \subsection{Ease of Use}
 
