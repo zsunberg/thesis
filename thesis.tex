@@ -26,12 +26,13 @@
 \usepackage{subcaption}
 \usepackage[per-mode=symbol]{siunitx}
 \usepackage{booktabs}
-\usepackage{xcolor}
+\usepackage[usenames,dvipsnames]{xcolor}
 \usepackage{tabularx}
 \usepackage{rotating}
 \usepackage{todonotes}
 \usepackage{standalone}
 \usepackage{pgfplots}
+\usepackage{listings}
 
 \pgfplotsset{every axis/.append style={font=\footnotesize,legend cell align=left}}
 
@@ -82,7 +83,7 @@
 \newcommand{\tdo}[1]{{#1}_{T\phi}}
 \newcommand{\trl}[1]{{#1}_{D}}
 
-% approximately proportional too
+% approximately proportional to
 \newcommand{\appropto}{\mathrel{\vcenter{
   \offinterlineskip\halign{\hfil$##$\cr
     \propto\cr\noalign{\kern2pt}\sim\cr\noalign{\kern-2pt}}}}}
@@ -99,6 +100,8 @@
 \newcommand{\odist}{\ensuremath{\mathcal{Z}}}
 \newcommand{\reward}{\ensuremath{\mathcal{R}}}
 
+\newcommand{\code}[1]{{\small\ttfamily #1}}
+
 
 
 \newcommand{\result}[4]{% args mean, sem, color, len
@@ -111,6 +114,60 @@
 \declaretheorem[name=Definition]{definition}
 \declaretheorem[name=Lemma]{lemma}
 \declaretheorem[name=Remark]{remark}
+
+\lstdefinelanguage{Julia}%
+{
+  keywordsprefix=\@,
+  morekeywords={abstract,break,case,catch,const,continue,do,else,elseif,%
+    end,export,false,for,function,immutable,import,importall,if,in,%
+    macro,module,otherwise,quote,return,switch,true,try,type,typealias,%
+      using,while,struct},
+     keywordstyle=\bfseries\color{red!55!black},
+     classoffset=1,
+     morekeywords={Float64, Int64, Bool, Any},
+      keywordstyle={\bfseries\color{NavyBlue!75!black}},
+      classoffset=0,
+   sensitive=true,%
+   alsoother={$},%$
+   morecomment=[l]\#,%
+   morecomment=[n]{\#=}{=\#},%
+   morestring=[s]{"}{"},%
+   morestring=[m]{'}{'},%
+}[keywords,comments,strings]%
+
+
+\lstset{%
+    language         = Julia,
+    basicstyle       = \ttfamily,
+    keywordstyle     = \bfseries\color{blue},
+    stringstyle      = \color{magenta},
+    commentstyle     = \bfseries\color{OliveGreen},
+    showstringspaces = false,
+    gobble=1,
+}
+
+\lstdefinestyle{customjulia}{
+  belowcaptionskip=1\baselineskip,
+  breaklines=true,
+  frame=L,
+  xleftmargin=\parindent,
+  language=Julia,
+  showstringspaces=false,
+  basicstyle=\footnotesize\ttfamily,
+  commentstyle=\itshape\color{OliveGreen!90!black},
+  identifierstyle=\color{black},
+  stringstyle=\color{orange},
+}
+
+\lstdefinestyle{customasm}{
+  belowcaptionskip=1\baselineskip,
+  frame=L,
+  xleftmargin=\parindent,
+  language=[x86masm]Assembler,
+  basicstyle=\footnotesize\ttfamily,
+  commentstyle=\itshape\color{purple!40!black},
+}
+
 
 
 \title{Safety and Efficiency in Autonomous Vehicles through Planning with Uncertainty}
@@ -152,14 +209,14 @@ The Markov decision process (MDP) is a systematic framework for modelling sequen
 MDPs and POMDPs are suitable models for a wide range of situations that an autonomous vehicle might face.
 However, obtaining the exact solution to a general POMDP is an intractable problem. % TODO Why
 This thesis considers approximate MDP and POMDP solutions and seeks to quantify their utility for autonomous vehicles.
-Specifically, it contains three contributions.
+Specifically, it contains four contributions.
 
-The first chapter analyzes the use of a certifiable safety constraint alongside approximate optimization in the context of unmanned aerial vehicle (UAV) collision avoidance.
+The first application chapter analyzes the use of a certifiable safety constraint alongside approximate optimization in the context of unmanned aerial vehicle (UAV) collision avoidance.
 UAV collision avoidance is challenging in particular because small unmanned vehicles often do not have the performance capability or legal permission to perform conventional altitude-based conflict resolution maneuvers, so they must perform more complex horizontal conflict resolution.
 In order to ensure safety, aerospace systems have particularly stringent certification requirements that likely preclude approximate randomized planning techniques capable of handling uncertainty.
 This work evaluates the performance price that comes with using a simple certified policy and shows that MDP and POMDP optimization can significantly reduce that price and improve both safety and efficiency simultaneously.
 
-The second chapter considers the effects of modeling uncertainty in a difficult lane changing task for a self-driving car.
+The second application chapter considers the effects of modeling uncertainty in a difficult lane changing task for a self-driving car.
 Specifically, the research estimates the value of planning with the internal states of other human drivers such as their intentions and dispositions.
 While several other researchers have used internal-state-aware planning methods to interact with human drivers in desirable ways, they have not evaluated whether these methods offer a substantial quantitative improvement in performance over conventional approaches.
 This thesis shows that, in a simplified simulated setting, planning with internal states using a POMDP formulation can significantly improve both safety and efficiency simultaneously.
@@ -168,11 +225,13 @@ Moreover, the thesis describes an experimental method for investigating other ca
 The benefits of POMDP planning can only be realized with algorithms that can handle real-world domains that are continuous and irregular.
 To that end, the third contribution of the thesis is a pair of new algorithms for solving POMDPs with continuous state, action, and observation spaces.
 These algorithms are motivated by analysis and numerical experiments that show that leading online POMDP solvers cannot handle continuous observation spaces.
-We prove that one of the previous solvers exhibits suboptimal behavior, and explain that the failure is due to two problems.
+I prove that one of the previous solvers exhibits suboptimal behavior, and explain that the failure is due to two problems.
 First, the large observation space causes policy trees to become too wide and not deep enough.
 Second, the number of state particles used to represent beliefs collapses to one, causing overconfidence.
 The new algorithms, POMCPOW and PFT-DPW, handle these problems using progressive widening and weighted particle belief representations.
 Numerical experiments show that they are able to solve problems where previous methods fail.
+
+The final contribution is a software package, POMDPs.jl, which uses the features of the Julia programming language to bring state-of-the-art POMDP solution methods to bear on problems that they define with a convenient and flexible high-level interface.
 
 A great deal of future work remains, including further mathematical analysis of the algorithms and testing with more realistic models of human behavior. But the contributions of this thesis to understanding the affects of uncertainty modeling and developing algorithms that apply to realistic problems are two vital steps on the path to safe and efficient autonomy.
 

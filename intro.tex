@@ -2,43 +2,158 @@
 
 \section{Autonomous Vehicles}
 
-\subsection{A World with Autonomous Transportation}
+Transportation is one of the most important ingredients to human civilization.
+In the past, vehicles used for transportation have been almost exclusively operated by humans.
+However, recent advances in sensing technology, computing power, mapping, data processing, and connectivity have made it possible to begin developing vehicles that are \emph{autonomous}, that is, they can perform a transportation task without requiring a human to control them.
 
-\begin{itemize}
-    \item Better Safety
-    \item More Efficiency
-    \item Less wasted time and stress
-    \item Better access to transportation
-\end{itemize}
+\subsection{Benefits of Autonomous Transportation} \label{sec:benefits}
+
+Autonomous vehicles have the potential to bring a wide range of benefits.
+The first of these benefits is \textbf{improved safety}.
+Around the world, more than 1.2 million people are killed every year by vehicles~\cite{who2015global}, and, according to a study concluded in 2007, the critical reason for more than \SI{90}{\percent} of motor vehicle crashes in the United States is driver error~\cite{nhtsa2015critical}.
+Since they are not affected by many of the crash-causing deficiencies that human drivers have, e.g. distraction, autonomous vehicles have the potential to greatly reduce the number of injuries and deaths.
+
+Another potential benefit of autonomous vehicles is \textbf{increased collective efficiency}.
+Currently, middle- and low-income nations lose up to \SI{3}{\percent} of GDP due to road vehicle accidents, many of which could be mitigated with autonomy~\cite{who2015global}.
+Moreover, autonomy has the potential to enable new models of vehicle usage for cities.
+For example, a city-wide mobility-on-demand (MOD) system consisting of purpose-built electric autonomous vehicles could provide a much more efficient system for commuting than the current fleet of individually-owned gas-powered vehicles optimized for factors other than commuting efficiency.
+The barriers to adopting such a system may be greatly reduced by autonomous vehicles' ability to, for instance, automatically travel to a charging station or rebalance to places where additional vehicles are needed.
+A recent study concluded that Manhattan taxi demand could be met with a fleet of autonomous cars \SI{60}{\percent} the size of the current taxi fleet \cite{RZ-MP:15_MODa}.
+
+The third benefit is the potential for \textbf{reduced personal transportation costs} in terms of time and stress.
+In the United States, workers commute an average of more than \SI{25}{\minute} in each direction~\cite{census2016travel}, and more than \SI{75}{\percent} drive alone~\cite{mckenzie2015who}.
+Thus a large fraction of American workers use an hour of their day focused on operating a vehicle.
+With autonomous vehicles, this stressful time could be eliminated and replaced with productive time or relaxation.
+
+The final potential benefit I will mention is \textbf{expanding access to mobility}.
+The requirement for a capable vehicle operator limits the ability for many people to use cars.
+For example, many people with permanent disabilities such as blindness or seizure disorders or even temporary injuries are precluded from the flexible personal point-to-point transportation afforded by cars, and this increases their dependence on caretakers.
+Autonomous cars would give these people safe personal transportation.
 
 \subsection{Current Progress}
 
-(Not sure what to say here)
+There has been a great deal of progress towards autonomy.
+For example, several companies including Amazon~\cite{shaban2018amazon} and Alphabet~\cite{sandoval2018alphabet}, are pursuing delivery systems consisting of autonomous aerial drones.
+A focal point of early ground vehicle development was the 2007 DARPA Urban Challenge~\cite{MB-KI-SS:10}, which was the first major demonstration of self-driving cars operating in a simulated urban environment.
+Since that time, significant progress has been made and testing operations in a small number of urban environments have become routine~\cite{dolgov2016google}.
+However, there are currently no large-scale commercial applications of autonomous vehicles, and several challenges remain.
 
 \subsection{Remaining Challenges}
 
+This section does not give an exhaustive list of the challenges remaining for deployment of autonomous vehicles, but it outlines a few and discusses how this thesis relates to them.
+
 \subsubsection{Technical}
-\subsubsection{Legal and Ethical}
-\subsubsection{Business}
+
+Some of the largest remaining technical challenges for autonomous vehicle development are challenges of generalization.
+Many of the components for navigating within a closed test space had already been developed by the time of the DARPA urban challenge in 2007~\cite{MB-KI-SS:10}.
+An industry leader has noted, for example, that ``it's relatively easy to master the first \SI{90}{\percent} of driving where you're traveling on freeways, navigating light city-street traffic, or making your way through simple intersections''~\cite{dolgov2016google}.
+However, autonomous vehicle testing is still limited to relatively small well-mapped environments because it is difficult to generalize solutions to new domains.
+
+In order to handle a larger and more diverse set of circumstances, autonomous vehicle designers must both gather more data~\cite{dolgov2016google} and design control systems to operate in the new environment.
+One approach to control system design is to specify the actions that a system should take by hand, and then evaluate these actions against some criteria.
+Examples of this approach are hand-tuned linear control systems and the specified behaviors of some of the urban challenge competitors (e.g.~\citet{urmson2007tartan}).
+A second approach is to use algorithms that systematically and automatically determine good actions according to some criteria.
+While the first approach is adequate for some constrained domains, the second is more likely to work in regimes that the designers have not explicitly tested.
+Moreover, the second approach reduces the number tasks involved in adapting to a new operational environment from two (identifying a model and designing a control system) to one (identifying a model).
+The algorithms and applications in this thesis belong to the latter family and improve our ability to apply the approach to problems with complex and uncertain dynamics.
+
+There are many other technical challenges including perception in adverse conditions, linking perception with reasoning, testing, security, cost reduction, and others, but they are not directly addressed in this work.
+
+\subsubsection{Ethical, Legal, and Economic}
+
+In addition to the technical challenges, there are a wide range of ethical, legal, and economic challenges including liability, job displacement, and discrimination against certain populations, that have the potential to hinder the success of autonomous vehicles~\cite{casey2016amoral}.
+This thesis does not seek to systematically address moral or legal challenges, but it does speak to one in particular.
+Autonomous vehicles must often make decisions that balance the interests of multiple people.
+For instance, in addition to the performance criteria that the vehicle operator desires, there may be \emph{externalities} that affect the well-being of other people.
+There is often a tradeoff between these objectives.
+For instance, traveling with increased speed will allow the owner to transport passengers or cargo faster, but it may endanger bystanders.
+The results in this thesis show that for the specific competing goals of safety and efficiency, both can be simultaneously improved by using better models and algorithms.
+It is likely that this principle will apply to other tradeoffs.
+Better algorithmic and modeling approaches may be an answer in cases where competing ethical, legal, and economic principles are at odds.
+
+% \subsubsection{Economic}
+% 
+% There are also questions surrounding the economics of autonomous vehicles including what model of ownership is most efficient, whether 
 
 \section{Decision Making Under Uncertainty}
 
+The task of controlling an autonomous vehicle is a task of decision making under uncertainty.
+That is, the vehicle control system must decide what actions to take to achieve good performance, even when there is uncertainty about the world around it and what will happen in the future.
+There are two ingredients needed to formulate such a problem.
+The first is criteria for good performance, and the second is a model of what is known about the world and how it will evolve.
+
+\subsection{Optimization objective}
+
+\todo{add a few equations to make this clearer}
+
+This thesis casts decision making problems as optimization problems.
+In other words, the criterion for good performance is choosing actions that maximize an objective function.
+The concrete structure that I adopt for this objective function is presented in \cref{sec:mdps}, but here a few words about defining it are in order.
+
+To define an objective function, an engineer must map the desires of human passengers or abstract societal goals like those described in \cref{sec:benefits} into a well-defined mathematical function.
+This is sometimes straightforward for individual goals such as minimizing the time to reach a destination.
+However, combining multiple goals is often a challenge because an optimization problem is not, in general, well-posed if it has multiple objective functions.
+
+One solution to this problem is to optimize a single objective and constrain all other objectives to meet specified thresholds~\cite{EA:99}.
+However many off-the shelf decision-making algorithms must be modified to handle this formulation, and choosing the thresholds adds another step to the development process.
+Another alternative is to create a single objective function that is a weighted sum of the functions corresponding to the individual rewards.
+This scalarization approach allows conventional decision-making algorithms to be used, but choosing appropriate weights before solving the problem is often difficult.
+
+Another challenge is that human preferences can be difficult to quantify and encode into a reward function.
+For these cases, inverse reinforcement learning can be used to determine a suitable reward function based on data recording how humans act \cite{levine2012continuous, sadigh2016leverage}.
+
+This thesis does not make significant contributions to understanding how to choose appropriate objectives, but instead adopts the weighted sum scalarization approach to combine a few important objectives.
+In particular, my investigation focuses on the goals of safety and efficiency, which are balanced using a scaling factor, $\lambda$.
+My work adopts a stance that is agnostic to the value $\lambda$ by focusing on Pareto frontier analysis.
+In this thesis, a solution is said to be \emph{Pareto-optimal} if it is optimal with respect to some positive value of $\lambda$, and the \emph{Pareto front} is the set of values of the pre-scalarization objectives for Pareto-optimal solutions (see~\cref{fig:pareto} for an example approximate Pareto front plot).
+When the optimization algorithm is changed, the entire Pareto front can move.
+If the Pareto front for algorithm A is in a better position than the front for algorithm B for most or all values of $\lambda$, then it is possible to argue that algorithm A is superior to algorithm B without committing to a particular value of $\lambda$.
+
 \subsection{Uncertainty in Decision Making}
 
+\todo{Should I just get rid of this whole section?}
+
+The second primary ingredient to a problem in decision making under uncertainty is a model of the randomness in the mapping from actions to the objective function.
+This thesis will discuss three types of uncertainty: outcome, model, and state.
+Although the definitions of these types are not formal, they are useful for conceptual understanding.
+The distinctions between the types are defined based on the concept of ``Markov state''.
+
+\subsubsection{Markov state}
+
+Consider the case where the configuration of the world changes over time according to a dynamics model.
+This thesis only considers models where these changes occur at specific discrete time intervals.
+A \emph{Markov state}, or simply \emph{state}, consists of the world configuration and possibly some other information specially chosen so that the state at the next time step depends only on the current state and not on any previous states.
+This property is known as the \emph{Markov property}.
+In general, the state may be a random variable, and, in this case, the next state must be independent of all previous states when conditioned on the current state.
+
 \subsubsection{Outcome Uncertainty}
+
+The simplest type of uncertainty is outcome uncertainty.
+Outcome uncertainty is uncertainty in the future state even when the current state and model are known exactly.
+In other words, it refers to the inherent stochasticity in the model.
+The important property of outcome uncertainty is that nothing can be learned by the agent to reduce it.
+
 \subsubsection{Model Uncertainty}
+
+A second category for uncertainty is model uncertainty.
+In some cases, the dynamic model of the system is not known to the agent, and this can be a source of uncertainty in the future of the state that compounds the outcome uncertainty.
+The distinction is that, over time the agent can observe how the state changes to learn more about the model and reduce this type of uncertainty.
+Methods that attempt to optimize an objective in the face of this type of uncertainty are usually referred to as \emph{reinforcement learning} \cite{RSS-AGB:98}.
+
 \subsubsection{State Uncertainty}
 
-\todo{POMDP methods also require a reward function.
-In some cases, constructing the reward function that balances different objectives (e.g., safety and efficiency) is straightforward. However, in other cases, human preferences can be difficult to quantify and encode into a reward function.
-For these cases, inverse reinforcement learning can be used to determine a suitable reward function based on data of how human drivers act \cite{levine2012continuous, sadigh2016leverage}.}
+A third type of uncertainty is state uncertainty.
+When there is state uncertainty, the agent cannot directly observe the state, and instead receives only observations that offer clues about it.
+However, it may reason about what the state could be and make better decisions based on this partial knowledge.
+The distinction between state and model uncertainty is that the state may change over time, while the model does not.
+Model uncertainty can be represented as state uncertainty by augmenting the state to include the unknown model parameters.
 
+\subsection{Markov Decision Processes} \label{sec:mdps}
 
-\subsection{Markov Decision Processes}
-
+\todo{add note about notation: $s_t$, $s'$}
 The Markov decision process (MDP) is a mathematical formalism that can represent a wide range of sequential decision making problems. 
-In an MDP, an agent takes \emph{actions} that affect the \emph{state} of the system and collects \emph{rewards} based on the state and actions.
-The \emph{Markov property} is a key attribute of MDPs which states that the next state depends (possibly stochastically) on the current state and action, and not on any previous states or actions.
+In an MDP, an agent takes \emph{actions} that affect the \emph{state} of the system, which satisfies the Markov property, and collects \emph{rewards} based on the states and actions.
+The MDP formalism is able to represent outcome uncertainty with a stochastic state transition model.
 
 Formally, an MDP is defined by the 5-tuple $(\mathcal{S}, \mathcal{A}, \mathcal{T}, \mathcal{R}, \gamma)$.
 The state space, $\mathcal{S}$, is the set of all possible states.
@@ -48,16 +163,27 @@ The reward function, $\mathcal{R}: \mathcal{S} \times \mathcal{A} \times \mathca
 $\mathcal{R}(s, a, s')$ denotes the reward for transitioning from $s$ to $s'$ when action $a$ is taken.
 Finally, $\gamma$ governs how reward is discounted in the future.
 
-The objective in an MDP is to find a policy, $\pi: \mathcal{S} \to \mathcal{A}$, that maps each encountered state to an action and, when $a_t = \pi(s_t)$, maximizes the cumulative expected reward,
+The objective in an MDP is to find a policy, $\pi: \mathcal{S} \to \mathcal{A}$, that maps each encountered state to an action and, when $a_t = \pi(s_t)$, maximizes the objective function.
+Because of the outcome uncertainty, the rewards that a policy will achieve are random variables.
+Thus, for the optimization problem to be well-posed, the objective must be a function of the distribution of the rewards.
+For a Markov decision process, the objective is to maximize the cumulative expected reward,
 \begin{equation} \label{eq:cumulative}
     E\left[\sum_{t=0}^\infty \gamma^t \mathcal{R}(s_t, a_t, s_{t+1}) \right]
 \end{equation}
-where the subscript $t$ is the time index. The state action value function, $Q(s,a)$, is defined as the expectation of the future cumulative reward given that the agent starts in state $s$, immediately takes action $a$, and then follows the optimal policy.
+where the subscript $t$ is the time index\footnote{Sequential decision problems where the objective involves maximizing a measure other than the expectation of the reward have been studied, but are much less common, and their solution is sometimes much more difficult than in the expectation case~\cite{chow2015risk}}.
 
-\subsection{Partially Observable Markov Decision Processes}
+It is important to note that it is sufficient to consider only the class of deterministic Markov policies, that is, policies that map each state to a single action, when searching for an optimal solution.
+It has been proven that, for a policy of any structure, e.g. a policy that is stochastic or a policy that depends on more than just the state, there exists a Markov policy that can attain the same objective value.
+Consequently, it is always possible to find a deterministic Markov policy that achieves the optimal objective value \cite{EA:99}.
+
+The objective of an MDP is sometimes discussed in terms of the optimal value function $V^*: \sspace \to \reals$, which is the cumulative expected reward given that the system starts in a specified state.
+The optimal state action value function, $Q^*(s,a)$, is defined as the expectation of the future cumulative reward given that the agent starts in state $s$, immediately takes action $a$, and then follows the optimal policy.
+
+\subsection{Partially Observable Markov Decision Processes} \label{sec:pomdps}
 
 A partially observable Markov decision process (POMDP) is similar to and MDP except that the agent cannot directly observe the state.
 Instead, the agent only has access to observations that are generated probabilistically based on the actions and latent true states.
+In this way, a POMDP is able to represent state uncertainty in addition to the outcome uncertainty that can be encoded in an MDP.
 A POMDP is defined by the 7-tuple $(\sspace, \aspace, \mathcal{T}, \mathcal{R}, \ospace, \odist, \gamma)$, where $\sspace$, $\aspace$, $\mathcal{T}$, $\mathcal{R}$, and $\gamma$ have the same meaning as in an MDP.
 Additionally, $\ospace$, is the observation space, and $\odist$ is the observation model.
 $\odist(o \mid s, a, s')$ is the probability or probability density of receiving observation $o$ in state $s'$ given that the previous state and action were $s$ and $a$.
@@ -76,14 +202,15 @@ Given the POMDP model, each subsequent belief can be calculated using Bayes' rul
 \end{equation}
 When the state space is discrete, the integrals may be replaced with sums.
 
-\todo{Talk about PSPACE completeness}
+Unfortunately, it has been shown that even the class of finite-horizon POMDPs is PSPACE-complete, indicating that it is extremely unlikely that efficient algorithms for large problems will be discovered \cite{papadimitriou1987complexity}.
+Because of this, approximate algorithms are often used.
 
 \subsubsection{Generative Models}
 
-or many problems, it can be difficult to explicitly determine or represent the probability distributions $\mathcal{T}$ or $\odist$.
+For many problems, it can be difficult to explicitly determine or represent the probability distributions $\tdist$ or $\odist$.
 Some solution approaches, however, only require samples from the state transitions and observations.
 A generative model, $G$, stochastically generates a new state, reward, and observation in the partially observable case, given the current state and action, that is $s', r = G(s,a)$ for an MDP, or $s', o, r = G(s, a)$ for a POMDP.
-A generative model implicitly defines $\mathcal{T}$ and $\odist$, even when they cannot be explicitly represented.
+A generative model implicitly defines $\tdist$ and $\odist$, even when they cannot be explicitly represented.
 
 \subsubsection{Belief MDP}
 
@@ -92,6 +219,18 @@ The reward function of this "belief MDP" is the expectation of the state-action 
 The Bayesian update of the belief serves as a generative model for the belief space MDP.
 
 \subsection{Value Iteration}
+
+Value iteration is the simplest offline method for solving MDPs.
+It relies on the Bellman equation, which characterizes the optimal value function,
+\begin{equation}
+    V^*(s) = \max_{a \in \aspace} \left\{R(s,a) + \text{E}\left[V^*(s') \mid s, a \right]\right\} \text{.}
+\end{equation}
+It can be shown for finite state spaces that the Bellman operator,
+\begin{equation}
+    \mathcal{B}[V](s) = \max_{a \in \aspace} \left\{R(s,a) + \text{E} \left[V(s') \mid s, a \right] \right\} \text{,}
+\end{equation}
+is a contraction mapping, and thus the unique solution to the Bellman equation, $V^*$, can be found by iteratively applying the Bellman operator, $V_{k+1} = \mathcal{B}[V_k]$, until the fixed point is reached when $V_{k+1} = V_k$ \cite{DB:05}.
+This process is known as value iteration.
 
 \subsection{Monte Carlo Tree Search} \label{sec:mcts}
 
@@ -169,15 +308,55 @@ These algorithms are mostly derivatives of the MCTS algorithm for MDPs (\cref{se
 A conceptually straightforward way to solve a POMDP using MCTS is to apply it to the corresponding belief MDP.
 Indeed, many tree search techniques have been applied to POMDP problems in this way \cite{ross2008online}.
 However, when the Bayesian belief update is used, this approach is computationally expensive.
-POMCP can tackle problems many times larger than its predecessors because it uses state trajectory simulations, rather than full belief trajectories, to build the tree.
+
+A major improvement in efficiency came with the introduction of the partially observable Monte Carlo planning (POMCP) algorithm \cite{silver2016mastering}. It is based on UCT, but can tackle problems many times larger than its predecessors because it uses state trajectory simulations, rather than full belief trajectories, to build the tree.
+Each node in the POMCP tree corresponds to an action- or observation-terminated history.
+At each iteration, a state is sampled from the current belief and simulated through the nodes that match the history as it is generated.
+Thus, the belief at each observation-terminated history node is effectively represented by the collection of states for the appropriate time step in the trajectories that match the history, similar to using a rejection sampling unweighted particle filter.
+
 Determinized sparse partially observable tree (DESPOT) is a similar approach that attempts to achieve better performance by analyzing only a small number of random outcomes in the tree \cite{somani2013despot}.
 Adaptive belief tree (ABT) was designed specifically to accommodate changes in the environment without having to replan from scratch \cite{kurniawati2016online}.
 
-\todo{Add POMCP section(?), or at least specifics}
-\todo{Add QMDP-Net}
+Some very recent methods, e.g. QMDP-Net \cite{karkus2017qmdp}, have attempted to solve POMDPs by training recurrent neural networks.
 
 \subsection{QMDP} \label{sec:qmdp}
 
-\todo{write QMDP section}
+One POMDP approximation that is particularly useful in many contexts, but known to be sub-optimal for some, is the QMDP approximation.
+This approximation is based on an algorithm proposed by \citet{littman1995learning}.
+However, in this thesis, it will refer to a broader class of approximations.
+Specifically, it refers to any policy where the action maximizes the expected $Q_\text{MDP}$ value for the belief.
+
+Let $Q_\text{MDP}$ be the optimal state-action value function for the fully observable MDP at the core of the POMDP.
+Then the expected $Q_\text{MDP}$ value for an action given a belief is $Q_\text{MDP}(b,a) = \int_{s \in \sspace} Q_\text{MDP}(s,a) b(s) ds$.
+Since it chooses the action that maximizes this value, it is easy to see that the QMDP approximation is the optimal solution to a problem with partial observability on the current step, but that subsequently becomes fully observable.
+
+Because the QMDP approximation assumes that all information about the state of the problem will become available on the next step, it has no incentive for learning about the state, and hence cannot choose to take costly information-gathering actions, even if they are part of the optimal solution to the POMDP.
+Nevertheless, the approximation is useful in many domains because it is much easier to compute than the full POMDP solution --- it requires only the solution to the fully observable MDP, which can usually be calculated efficiently using e.g. value iteration.
+Moreover the QMDP solution has acceptable quality for many domains (see \cref{tab:experiments}).
 
 \section{Contributions}
+
+The body of this thesis is laid out in four chapters.
+Each contains one or more contributions.
+
+\Cref{chap:uav} analyzes the use of certifiable trusted resolution logic (TRL) alongside approximate optimization in the context of unmanned aerial vehicle collision avoidance.
+Specifically, the price of certifiability is quantified by optimizing the TRL and solving the MDP representation of the problem separately and observing the gap between the resulting Pareto fronts.
+Simulation results then demonstrate that this gap can be largely closed without sacrificing certifiability by using the TRL as a safety constraint on the action space and solving the resulting MDP.
+
+\Cref{chap:multilane} considers the effects of modeling uncertainty in a difficult lane changing task for a self-driving car.
+Specifically, I estimate the value of planning with the internal states of other human drivers such as their intentions and dispositions.
+While several other researchers have used internal-state-aware planning methods to interact with human drivers in desirable ways, they have not evaluated whether these methods offer a substantial quantitative improvement in performance over conventional approaches.
+I show that, in a simplified simulated setting, planning with internal states using a POMDP formulation can significantly improve both safety and efficiency simultaneously.
+In particular, I evaluate planning with a POMDP model that includes state uncertainty against both overconfident and conservative MDP models that model all uncertainty as outcome uncertainty and show that using state uncertainty has a benefit over both.
+The experimental method proposed here is also applicable to other cases in which internal-state-aware planning may improve performance.
+
+The benefits of POMDP planning can only be realized with algorithms that can handle real-world domains that are continuous and irregular.
+To that end, \Cref{chap:pomcpow} proposes a pair of new algorithms for solving POMDPs with continuous state, action, and observation spaces.
+These algorithms are motivated by analysis and numerical experiments that show that leading online POMDP solvers cannot handle continuous observation spaces.
+I prove that one of the previous solvers exhibits suboptimal behavior, and explain that the reason previous solvers fail on these problems is that they produce degenerate belief nodes with only a single state particle.
+The new algorithms, POMCPOW and PFT-DPW, handle this problem using progressive widening and weighted particle belief representations.
+Numerical experiments show that they are able to solve problems where previous methods fail.
+
+\Cref{chap:pomdpsjl} contains a description of the final contribution, which is a software package, POMDPs.jl, that aims to make the advances made in this thesis easier for others to build on.
+The package uses the features of the Julia programming language to provide a convenient and flexible interface for expressing POMDPs.
+It also contains many state-of-the art solvers and tools for writing new ones and running simulation experiments.

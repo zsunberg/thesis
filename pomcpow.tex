@@ -124,7 +124,7 @@ This algorithm obtained remarkably good solutions for a very large autonomous fr
 To our knowledge, that is the first work applying progressive widening to POMCP, and it does not contain a detailed description of the algorithm or any theoretical or experimental analysis other than the driving application.
 
 This algorithm may converge to the optimal solution for POMDPs with discrete observation spaces; however, on continuous observation spaces, POMCP-DPW is suboptimal.
-In particular, it finds a QMDP policy, that is, the solution under the assumption that the problem becomes fully observable after one time step \cite{littman1995learning,kochenderfer2015decision}.
+In particular, it finds a QMDP policy (see \cref{sec:qmdp}).
 In fact, for a modified version of POMCP-DPW, it is easy to prove analytically that it will converge to such a policy.
 This is expressed formally in Theorem~\ref{thm:qmdp} below.
 A complete description of the modified algorithm and problem requirements including the definitions of polynomial exploration, the regularity hypothesis for the problem, and exponentially sure convergence are given in \cref{sec:proof}.

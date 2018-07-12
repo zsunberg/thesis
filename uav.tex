@@ -1,4 +1,4 @@
-\chapter{Trusted and Optimized UAV Collision Avoidance}
+\chapter{Trusted and Optimized UAV Collision Avoidance} \label{chap:uav}
 
 \section{Collision Avoidance for Unmanned Aerial Vehicles} \label{sec:uavintro}
 
@@ -220,7 +220,7 @@ This section considers optimization of two competing metrics. The first goal is 
 
 Specifically, the utility associated with an encounter is the sum of the stage-wise rewards throughout  the entire encounter
 \begin{equation}\label{eqn:encrew}
-    \sum_{t=0}^\infty R(s_t, a_t) \text{.}
+    \sum_{t=0}^\infty \reward(s_t, a_t) \text{.}
 \end{equation}
 
 In order to meet both goals, the stage-wise reward is

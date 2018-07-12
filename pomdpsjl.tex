@@ -2,10 +2,11 @@
 
 Since exact optimal solutions to POMDPs can rarely be attained, most research into solving realistic problems involves empirical comparison between solution techniques.
 Sharing solver software between researchers can greatly improve speed and quality of this work.
+Moreover, a consistent and concise framework for representing problems and demonstrating solution techniques is invaluable for POMDP education.
 This chapter describes the POMDPs.jl software package created by the Stanford Intelligent Systems Lab (SISL) to make state-of-the-art POMDP solution methods easily accessible to students, researchers, and engineers.
 All of the research in \cref{chap:multilane,chap:pomcpow} was conducted using this framework.
 
-\todo{Use cases?}
+The POMDPs.jl package itself is implementation-free, and contains only the interface, however the JuliaPOMDP organization maintains several other packages that provide tools and concrete implementations. For example, the POMDPToolbox package contains a variety of useful tools for representing common distributions, beliefs, policies, etc. and the POMDPModels package contains some simple problem implementations.
 
 \section{Challenges for POMDP-solving software}
 
@@ -13,7 +14,7 @@ A successful POMDP software framework must have, at a minimum, the following att
 
 \subsection{Speed}
 
-Since POMDPs are difficult to solve\todo{Make stronger statement about computational complexity}, any computational slowdown such as unnecessary memory allocation or runtime type inference significantly reduces the maximum problem size that the framework can handle.
+Since POMDPs are difficult to solve~\cite{papadimitriou1987complexity}, any computational slowdown such as unnecessary memory allocation or runtime type inference significantly reduces the maximum problem size that the framework can handle.
 For this reason, POMDP algorithms must be compiled to efficient processor instructions with low overhead.
 
 \subsection{Flexibility}
@@ -166,131 +167,138 @@ Examples of the output of this system are shown in \cref{fig:requirements}.
     \label{fig:requirements}
 \end{figure}
 
-\section{Example}
+\section{Examples}
 
-This section presents simple examples illustrating implementations of the concepts in~\cref{sec:}, namely the problem, the solver, and the experiment. 
-The POMDPs.jl interface consists of several abstract types and a set of functions that support these concepts. 
+This section presents simple examples illustrating implementations of the concepts in~\cref{sec:concepts}, namely the problem, the solver, and the experiment. 
 
-% \lstset{escapechar=@,style=customjulia}
-% 
-% %\begin{lstlisting}
-%  %using POMDPs       # loads the interface
-%  %POMDPs.add("QMDP") # installs a supported JuliaPOMDP package and its deps
-% %\end{lstlisting}
-% 
-% 
-% \noindent \textbf{Problem:} 
-% The problem defines the MDP or POMDP model to be solved.
-% %The user decides how to define the model components.
-% Below is a definition for the Tiger POMDP~\citep{kaelbling1998planning}.
-% 
-% % \begin{lstlisting}
-% %  type TigerState s::Bool end
-% %  type TigerPOMDP <: POMDP{TigerState, Int64, Bool}
-% %      p_correct::Float64     # probability of hearing the tiger correctly
-% %      discount::Float64      # discount factor
-% %  end
-% % \end{lstlisting}
-% \begin{lstlisting}
-%  immutable TigerPOMDP <: POMDP{Bool, Int64, Bool}
-%      p_correct::Float64     # probability of hearing the tiger correctly
-%      discount::Float64      # discount factor
-%  end
-% \end{lstlisting}
-% 
-% \noindent The {\small\ttfamily TigerPOMDP} type inherits from the abstract {\small\ttfamily POMDP} type (part of the POMDPs.jl interface), which is parametrized by the state, action, and observation types. 
-% % The state can be represented with a custom {\small\ttfamily TigerState} type or with a native {\small\ttfamily Bool} type.
-% In this case, the state is represented by the native {\small\ttfamily Bool} type, but, in general, these types may be user-defined.
-% The same flexibility is available for the other components of the problem, giving the user the flexibility to define their problem in the form of their choosing. 
-% 
-% \iffalse
-% \begin{lstlisting}
-%  type TigerPOMDP <: POMDP{Bool, Int64, Bool}
-%      r_listen::Float64      # reward for listening (negative)
-%      r_findtiger::Float64   # reward for finding tiger (negative)
-%      r_escapetiger::Float64 # reward for escaping the tiger
-%      p_correct::Float64     # probability of hearing the tiger correctly
-%      discount::Float64      # discount factor
-%  end
-% \end{lstlisting}
-% \fi
-% 
-% 
-% % removed figure
-% \iffalse
-% \begin{figure}
-% \begin{lstlisting}[basicstyle=\small\ttfamily]
-%     type BabyPOMDP <: POMDP{Bool, Bool, Bool}
-%         r_feed::Float64                # reward for feeding (negative)
-%         r_hungry::Float64              # reward for being hungry (negative)
-%         p_become_hungry::Float64       # probability of becoming hungry
-%         p_cry_when_hungry::Float64     # probability of crying when hungry
-%         p_cry_when_not_hungry::Float64 # probability of crying when not hungry
-%         discount::Float64              # discount factor
-%     end
-%     ...
-%     type BoolDistribution <: AbstractDistribution{Bool}
-%         p::Float64                     # probability of true
-%     end
-%     ...
-%     function transition(pomdp::BabyPOMDP, s::Bool, a::Bool, d::BoolDistribution)
-%         if !a && s                     # did not feed when hungry
-%             d.p = 1.0
-%         elseif a                       # fed
-%             d.p = 0.0
-%         else                           # did not feed when not hungry
-%             d.p = pomdp.p_become_hungry
-%         end
-%         return d
-%     end
-%     ...
-% \end{lstlisting}
-% \caption{Sample code from the implementation of a POMDP problem. The elipses indicate locations where code has been omitted.}
-% \label{fig:problem}
-% \end{figure}
-% \fi
-% 
-% 
-% \noindent \textbf{Solver:} 
-% A solver implementation typically requires three type definitions: a {\small\ttfamily Solver} that contains the parameters that define solver behavior, a {\small\ttfamily Policy} that defines a mapping from beliefs to actions, and an {\small\ttfamily Updater} that defines how the belief is updated with new observations.
-% An example of a QMDP~\citep{littman1995} policy type is shown below.
-% %\todo[author=EB, inline]{So, we are ok defining belief updater as part of the solver?}
-% 
-% \begin{lstlisting}
-%  type QMDPPolicy{Action} <: Policy
-%      alphas::Matrix{Float64}    # policy alpha vectors
-%      action_map::Vector{Action} # indices to actions  
-%      pomdp::POMDP    	       # POMDP model
-%  end
-% \end{lstlisting}
-% 
-% \noindent A solver implementation usually includes three top-level functions: {\small\ttfamily solve}, that creates a policy for the problem given the solver, {\small\texttt{action}}, that emits an action for a belief based on the policy, and {\small\texttt{update}}, that updates the belief based on the action taken and the observation received, given the updater.
-% 
-% 
-% \noindent \textbf{Experiment:} 
-% Experiments combine problems and solvers to evaluate the quality of a solver policy.
-% For example, the experimenter might create a simulator type, {\ttfamily Sim}, and a corresponding {\ttfamily simulate} function (an important part of the main loop is shown below).
-% \begin{lstlisting}
-%  function simulate(sim::Sim, pomdp, policy, updater, initial_dist)
-%     ...
-%     for t in 1:sim.max_steps
-%         a = action(policy, b)
-%         sp = rand(sim.rng, transition(pomdp, s, a))
-%         r_total += discount(pomdp)^t*reward(pomdp, s, a, sp)
-%         o = rand(sim.rng, observation(pomdp, s, a, sp))
-%         b = update(updater, b, a, o)
-%         ...
-% \end{lstlisting}
-% A simulation can then be run as follows: 
-% \begin{lstlisting}
-%  using QMDP, POMDPModels, POMDPToolbox # import JuliaPOMDP packages
-%  pomdp = TigerPOMDP()                  # initialize the tiger problem
-%  solver = QMDPSolver()                 # initialize QMDP solver
-%  policy = solve(solver, pomdp)         # compute a policy
-%  r = simulate(Sim(), pomdp, policy, updater(policy), DiscreteBelief(2))
-% \end{lstlisting}
+\lstset{escapechar=@,style=customjulia}
 
+\subsection{Problem}
 
+The problem defines the MDP or POMDP model to be solved.
+%The user decides how to define the model components.
+For this example, consider the Tiger POMDP example of \citet{kaelbling1998planning}.
 
+\begin{lstlisting}
+ struct TigerPOMDP <: POMDP{Symbol, Symbol, Symbol}
+     p_correct::Float64 # probability of hearing the tiger correctly
+     discount::Float64  # discount factor
+ end
+\end{lstlisting}
+%
+The \code{TigerPOMDP} type is a subtype of the abstract {\small\ttfamily POMDP} type 
+The three parameters of \code{POMDP} denote the types used to represent the states, actions, and observations.
+These can be any types including built-in Julia types or special-purpose user defined types.
+Here \code{Symbol}s (interned strings) are used for the sake of readability, but \code{Bool}s, \code{Int}s, or a custom enumeration could also easily be used.
+% In this case, since the tiger is behind one of two doors, the state is represented by the native \code{Bool}.
+% Similarly, since there are three actions, an \code{Int} is used to represent each, and a \code{Bool} represents each observation.
+% The constants make the code easier to read.
+ 
+The problem behavior is defined by implementing new methods of the functions in the POMDPs.jl interface.
+For example, the function below returns the observation distribution for the Tiger POMDP given an action and state.
 
+\begin{lstlisting}
+ function POMDPs.observation(pomdp::TigerPOMDP, a::Symbol, sp::Symbol)
+     pc = pomdp.p_correctly
+     if a == :listen
+         if sp == :tiger_left
+             p = pomdp.p_correct
+         else
+             p = 1.0 - pomdp.p_correct
+         end
+     else
+         p = 0.5
+     end
+     return SparseCat([:tiger_left, :tiger_right], [p, 1.0-p])
+ end
+\end{lstlisting}
 
+The \code{SparseCat} object returned by this method is provided by the POMDPToolbox package, represents a (potentially sparse) categorical distribution over a list of objects.
+Other code can randomly sample from the \code{SparseCat} distribution, query its probability distribution, and efficiently iterate over the members with nonzero probability.
+
+Since the state in the Tiger POMDP never changes, the transition dynamics can be expressed concisely as
+\begin{lstlisting}
+ function POMDPs.transition(pomdp::TigerPOMDP, s::Symbol, a::Symbol)
+     if a == :listen
+         return SparseCat([s], [1.0]) 
+     else # a looking action - the problem finishes
+         return SparseCat([:done], [1.0])
+     end
+ end
+\end{lstlisting}
+
+The entire problem definition contains several more methods, including \code{reward}, \code{actions}, \code{discount}, \code{isterminal}, etc.
+
+\subsection{Solver} 
+
+A solver implementation requires between one and three type definitions: a \code{Solver} that contains the parameters that define solver behavior, often a \code{Policy} that defines a mapping from beliefs to actions, and sometimes an \code{Updater} if the belief is closely linked to how the policy functions.
+Some example code for the QMDP~\citep{littman1995} solution method is shown below.
+
+QMDP works by running value iteration on the fully observable MDP at the core.
+In the \code{solve} function, partially listed below, the POMDPs.jl functions which will have methods for the particular POMDP being solved are called.
+Once value iteration has completed, an \code{AlphaVectorPolicy} from POMDPToolbox.jl is returned.
+The ellipses indicate code that has been left out for the sake of brevity.
+
+\begin{lstlisting}
+ function POMDPs.solve(solver::QMDPSolver, pomdp::POMDP)
+     ...
+     for i in 1:solver.max_iterations
+         ...
+         for (istate,s) in enumerate(states)
+             if isterminal(mdp, s)
+                 util[istate] = 0.0
+                 ...
+             else
+                 ...
+                 for a in iterator(actions(pomdp, s))
+                     dist = transition(mdp, s, a)
+                     u = 0.0
+                     for (sp, p) in weighted_iterator(dist)
+                         r = reward(pomdp, s, a, sp)
+                         isp = state_index(pomdp, sp)
+                         u += p * (r + discount(pomdp) * util[isp])
+                 ...
+     return AlphaVectorPolicy(qvalues)
+ end
+\end{lstlisting}
+
+\subsection{Simulator}
+
+POMDP Solution algorithms are typically evaluated by running Monte Carlo simulations.
+A \code{Simulator} calls POMDPs.jl functions defined for the solver and the problem to run a simulation and return the desired statistics from that simulation.
+For example, the experimenter might create a simulator type, {\ttfamily Sim}, and a corresponding {\ttfamily simulate} function (an important part of the main loop is shown below).
+\begin{lstlisting}
+ function simulate(sim::Sim, pomdp::POMDP, policy::Policy, updater::Updater, initial_dist)
+    ...
+    for t in 1:sim.max_steps
+        a = action(policy, b)
+        sp = rand(sim.rng, transition(pomdp, s, a))
+        r_total += discount(pomdp)^t*reward(pomdp, s, a, sp)
+        o = rand(sim.rng, observation(pomdp, s, a, sp))
+        b = update(updater, b, a, o)
+        ...
+\end{lstlisting}
+
+With the examples above and the appropriate additional methods defined, a simulation can then be run as follows: 
+\begin{lstlisting}
+ pomdp = TigerPOMDP()           # initialize the tiger problem
+ solver = QMDPSolver()          # initialize QMDP solver
+ policy = solve(solver, pomdp)  # compute a policy
+ r = simulate(Sim(), pomdp, policy, updater(policy), DiscreteBelief(2))
+\end{lstlisting}
+
+\section{Summary}
+
+By using the leverage of the Julia programming language, POMDPs.jl provides an unprecedented level of flexibility for expressing and solving POMDPs. It is being used by other researchers to investigate topics as diverse as GPS jammer detection by drones and cancer screening recommendations, along with numerous student projects for a course taught at Stanford.
+
+\todo{See if I can cite some things}
+
+However, there is still much work to be done.
+First, for the simplest examples, POMDPs.jl is a rather clumsy interface in that it requires methods to be implemented to define behavior.
+Some of the best interfaces for expressing mathematical optimization problems, such as JuMP~\cite{dunning2017jump} and CVX~\cite{grant2014cvx}, have concise, declarative interfaces that can express problems in a few lines of code and be easily interpreted by looking at one page for a short time.
+The POMDP domain is much more diverse and complex than the optimization domains addressed by these packages, but a concise declarative interface that can represent a subset of POMDPs would be very helpful in the education mission of POMDPs.jl.
+
+Second, many of the solvers are far from achieving the full performance potential of the algorithms that they implement.
+Since most modern hardware performance increases are due to parallelism rather than single-process speed increases, one of the most important factors in speeding up solver code is parallel implementation.
+Though Julia has built-in tools for parallel processing, only a few of the solvers have parallel capabilities because many of the important factors in efficient parallelism, such as proper cache usage, have many pitfalls.
+An investment of effort into parallelizing solver code would make the POMDPs.jl ecosystem much more useful.
