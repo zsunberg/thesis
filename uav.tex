@@ -1,5 +1,10 @@
 \chapter{Trusted and Optimized UAV Collision Avoidance} \label{chap:uav}
 
+This thesis's first investigation into safety and efficiency is in the context of unmanned aerial vehicles.
+Collision avoidance is an important challenge that must be overcome to make UAV operation routine and safe.
+In this chapter, the suitability of the collision avoidance system for easy certification is the primary safety focus.
+The challenge is to create a system that is both easy to certify and has minimal impact on efficient normal operations.
+
 \section{Collision Avoidance for Unmanned Aerial Vehicles} \label{sec:uavintro}
 
 \begin{figure}
@@ -485,7 +490,35 @@ In particular, neither will ever command an action that is deemed unsafe by the 
 Thus, they provide the same level of trust as the TRL and thus reduce the price of trust.
 In this case, trusted direct optimization is able to nearly close the gap between static TRL and direct optimization, while optimized TRL reduces the gap by about half, so trusted direct optimization would be the preferred approach.
 
-
 The software used to simulate these experiments was written in the Julia programming language, and is freely available at \texttt{\small{https://github.com/zsunberg/UASEncounter}}.
 
+\section{Discussion}
 
+This chapter has explored using trusted resolution logic alongside approximate optimization to produce a high performance collision avoidance system for UAV that is also relatively easy to certify.
+Due to flight performance and regulatory constraints, only horizontal maneuvers are considered when resolving potential collisions and the intruding aircraft is presumed to be unaware of the UAV.
+This problem is formulated as a Markov decision process.
+It is solved using an approximate value iteration approach.
+This general approach is widely used~\cite{kochenderfer2015decision}, though problems of this size are still challenging to handle.
+By choosing appropriate features and using a post-decision state, the method is made tractable for this problem.
+
+% Using simple trusted resolution logic, where the UAV simply chooses the closest heading to the goal direction that will never pass within a specified distance $D$ of the intruder maintaining its current heading is an alternate approach.
+Using simple trusted resolution logic that guarantees a separation distance $D$ if the intruder maintains it current heading is an alternate approach.
+This approach has the advantage that it can be easily certified because, by construction, it will never command a heading that is considered dangerous.
+However, when this TRL is compared to an approximate dynamic programming solution to the MDP, it is either too overconfident, causing many more near mid air collisions than the MDP approach, or it is too conservative, causing unnecessary disruption to normal flight.
+These tests demonstrate that there is a price that comes with certifiability and trustworthiness, and the performance gap between the approaches quantifies this price. Two alternative combinations of approximate dynamic programming and the TRL are considered as ways to reduce the price.
+
+First, approximate dynamic programming is applied to dynamically choose $D$ within a certified range based on the encounter state.
+Since every potential action is pre-certified, this approach retains the ease of certification of the TRL approach.
+However, since this new action space is relatively limited, it only reduces the price by about half.
+
+The second approach is to filter the original action space of turning maneuvers through the TRL so that the UAV may only take actions that will maintain $D$ separation based on the current state.
+This approach should also be easy to certify, and it largely closes the performance gap, nearly eliminating the price of certifiability.
+
+There are many potential extensions for this work.
+First, the function approximation for the value iteration could be improved.
+The feature-based approach used here worked well, but the selection of the features was mostly heuristically justified, and another more advanced and general approximation technique such as neural networks may work better.
+Most importantly, the uncertainty model should be improved.
+The current model was not justified with data, and it is extremely unlikely that a Gaussian noise model reflects real intruder behavior.
+It is much more plausible that the intruder has an operational intention unknown to the UAV which should be modeled as a hidden state in the problem.
+It is not immediately clear how to solve the resulting POMDP offline, but a QMDP approach using the MDP solution found in this work may be adequate.
+This concept of a hidden internal state governing the behavior of other agents is investigated in the next chapter, but in a different context: self-driving cars.

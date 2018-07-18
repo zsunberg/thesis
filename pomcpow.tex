@@ -1,15 +1,17 @@
 \chapter{Online Algorithms for Continuous POMDPs} \label{chap:pomcpow}
 
-\section{Background}
-
+The autonomous driving problem in the previous chapter illustrates that modeling partially observable internal states can have a significant effect on performance.
+POMDPs based on real world problems, such as the one considered in~\cref{chap:multilane}, often have continuous state, action, and observation spaces.
 Although the research surveyed in \cref{sec:solutions} has yielded effective solution techniques for many classes of POMDPs, there remains a need for simple, general purpose online solvers that can handle continuous spaces, especially continuous observation spaces.
-This chapter takes some first steps toward addressing that need.
+This chapter takes some important steps toward addressing that need.
 
 POMCP and other online methods can easily accomodate continuous state spaces without any modification \cite{goldhoorn2014continuous}.
 However, there has been less progress on problems with continuous observation spaces.
 This chapter presents two similar algorithms which address the challenge of solving POMDPs with continuous state, action, and observation spaces.
 The first is based on POMCP and is called partially observable Monte Carlo planning with observation widening (POMCPOW). 
 The second solves the belief-space MDP and is called particle filter trees with double progressive widening (PFT-DPW).
+
+\section{Background}
 
 \begin{figure}[htb]
 \begin{center}
@@ -483,7 +485,7 @@ The values for the observation widening parameters, $k_o$ and $\alpha_o$, were s
 A small $\alpha_o$ essentially limits the number of observations to a static number $k_o$, resulting in behavior reminiscent of sparse UCT \cite{browne2012survey}, preventing unnecessary widening and allowing the tree to grow deep.
 This seems to work well in practice with the branching factor ($k_o$) set to values between \num{2} and \num{8}, and suggests that it may be sufficient to limit the number of children to a fixed number rather than do progressive widening in a real implementation.
 
-\section{Summary}
+\section{Discussion}
 
 The results in this chapter clearly show that the previous leading online solvers are unable to adequately solve POMDPs with continuous observation spaces where exploration is important.
 In particular, \cref{thm:qmdp} explains why these methods behave similarly to QMDP.
@@ -499,3 +501,6 @@ Thus, much work remains along this trajectory.
 DESPOT has several attractive attributes compared to the new algorithms presented here.
 In particular, its use of a fixed number of scenarios to control widening, and bounds to control exploration may make it more amenable to analysis and allow it to perform better in practice.
 Extending DESPOT to handle continuous observation spaces seems to be a promising future direction.
+
+In order to make this type of research much easier, the Stanford intelligent systems lab has created a software framework called POMDPs.jl which provides a standard interface for expressing problems and tools for rapidly prototyping and evaluating new algorithms using the Julia programming language.
+This framework is the subject of the next chapter.

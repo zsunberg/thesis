@@ -1,6 +1,6 @@
 \chapter{POMDPs.jl: A Framework for Sequential Decision Making under Uncertainty} \label{chap:pomdpsjl}
 
-Since exact optimal solutions to POMDPs can rarely be attained, most research into solving realistic problems involves empirical comparison between solution techniques.
+Since exact optimal solutions to POMDPs can rarely be attained, most research into solving realistic problems like those investigated in~\cref{chap:uav,chap:multilane} involves empirical comparison between solution techniques.
 Sharing solver software between researchers can greatly improve speed and quality of this work.
 Moreover, a consistent and concise framework for representing problems and demonstrating solution techniques is invaluable for POMDP education.
 This chapter describes the POMDPs.jl software package created by the Stanford Intelligent Systems Lab (SISL) to make state-of-the-art POMDP solution methods easily accessible to students, researchers, and engineers.
@@ -268,14 +268,17 @@ POMDP Solution algorithms are typically evaluated by running Monte Carlo simulat
 A \code{Simulator} calls POMDPs.jl functions defined for the solver and the problem to run a simulation and return the desired statistics from that simulation.
 For example, the experimenter might create a simulator type, {\ttfamily Sim}, and a corresponding {\ttfamily simulate} function (an important part of the main loop is shown below).
 \begin{lstlisting}
- function simulate(sim::Sim, pomdp::POMDP, policy::Policy, updater::Updater, initial_dist)
+ function simulate(sim::Sim,
+                   pomdp::POMDP,
+                   policy::Policy,
+                   filter=updater(policy))
     ...
     for t in 1:sim.max_steps
         a = action(policy, b)
         sp = rand(sim.rng, transition(pomdp, s, a))
         r_total += discount(pomdp)^t*reward(pomdp, s, a, sp)
         o = rand(sim.rng, observation(pomdp, s, a, sp))
-        b = update(updater, b, a, o)
+        b = update(filter, b, a, o)
         ...
 \end{lstlisting}
 
@@ -284,10 +287,10 @@ With the examples above and the appropriate additional methods defined, a simula
  pomdp = TigerPOMDP()           # initialize the tiger problem
  solver = QMDPSolver()          # initialize QMDP solver
  policy = solve(solver, pomdp)  # compute a policy
- r = simulate(Sim(), pomdp, policy, updater(policy), DiscreteBelief(2))
+ r = simulate(Sim(), pomdp, policy)
 \end{lstlisting}
 
-\section{Summary}
+\section{Discussion}
 
 By using the leverage of the Julia programming language, POMDPs.jl provides an unprecedented level of flexibility for expressing and solving POMDPs. It is being used by other researchers to investigate topics as diverse as GPS jammer detection by drones and cancer screening recommendations, along with numerous student projects for a course taught at Stanford.
 

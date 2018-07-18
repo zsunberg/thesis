@@ -1,5 +1,10 @@
 \chapter{Planning with Internal States in Freeway Driving} \label{chap:multilane}
 
+The second in-depth investigation of this thesis is in the area of autonomous driving.
+\cref{chap:uav} focuses on finding the best way to integrate certifiable safety constraints, but uses a simplistic stochastic model for the other agent the UAV interacts with.
+This chapter keeps the safety constraint architecture discovered in the last chapter as a constraint on the action space (\cref{sec:actions}), but it focuses on investigating a richer stochastic model.
+In particular, it demonstrates the advantage of using a model with other agents' internal states represented using state uncertainty in the problem formulation.
+
 \section{Human-Robot Interaction in Autonomous Driving}
 
 One challenge in introducing autonomous automobiles is ensuring that they interact safely with human drivers.
@@ -441,3 +446,33 @@ If there is little correlation, planning with internal states offers a less pron
 \end{figure}
 
 \todo{add robustness study}
+
+\section{Discussion}
+
+This chapter investigates the effects of modeling outcome and state uncertainty in autonomous driving.
+The problem of making multiple lane changes on a highway within a limited distance is modeled as a POMDP.
+Both MDP solutions that ignore the internal states of other drivers, and POMDP solutions that do model these internal states with various degrees of approximation are considered.
+An upper performance bound is established by planning with full knowledge of the internal states.
+In order to remain agnostic with regard to the relative importance of safety and efficiency, Pareto frontiers are compared.
+
+The advantage of POMDP approaches over both conservative and overly confident MDP approaches is clear in all of the tests.
+However, the relative effectiveness of different POMDP approaches is heavily dependent on the correlation of the distributions of the internal states.
+If the internal states are highly correlated, simply estimating them with a particle filter and planning assuming certainty equivalence is adequate to nearly match the upper performance bound.
+On the other hand, when the parameters are uncorrelated, the QMDP planner performs much better than the certainty equivalence planner, and POMCPOW performs much better than QMDP.
+Moreover, in this uncorrelated case, there is a significant gap between all approaches and the upper bound.
+Partial correlation results in the expected results between the correlated and uncorrelated cases.
+
+The primary weakness of this investigation is the model for other drivers.
+Since the IDM and MOBIL models were developed to simulate large scale traffic flow~\cite{treiber2000idm,kesting2007mobil}, their accuracy for microscopic simulations has not been attested with data.
+Upgrading to models learned from data would further validate the conclusions drawn here.
+Other similar research (e.g.~\cite{schmerling2018multimodal}) has taken steps in this direction by using a conditional variational auto-encoder model.
+The model used here also neglects one of the key internal states of drivers: intentions.
+Planning based on the possible intentions of other drivers would likely be an even more powerful planning technique than the approach investigated here because it would enable sophisticated interaction and communication between the autonomous cars and humans.
+
+The results of this investigation should also be used to guide future research into modeling.
+In particular, since correlation is such a significant factor influencing performance, it is important to determine whether internal states that determine behavior are correlated with easily measured quantities in real human drivers.
+
+Finally, in order to isolate the effects of uncertainty modeling in this problem, the solution algorithm family in this investigation is limited to variants of Monte Carlo tree search that use double progressive widening.
+More advanced planning techniques should also be investigated.
+The next chapter analyzes online algorithms for solving POMDPs with continuous observation spaces like the problem addressed here.
+In addition to proposing the POMCPOW algorithm used in this chapter, it includes a comparison of another advanced algorithm, DESPOT, on this problem and shows that it outperforms POMCPOW because of its ability to plan with a longer effective horizon.
