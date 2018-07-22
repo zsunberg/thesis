@@ -225,7 +225,7 @@ Moreover, the thesis describes an experimental method for investigating other ca
 The benefits of POMDP planning can only be realized with algorithms that can handle real-world domains that are continuous and irregular.
 To that end, the third contribution of the thesis is a pair of new algorithms for solving POMDPs with continuous state, action, and observation spaces.
 These algorithms are motivated by analysis and numerical experiments that show that leading online POMDP solvers cannot handle continuous observation spaces.
-I prove that one of the previous solvers exhibits suboptimal behavior, and explain that the failure is due to two problems.
+Previous solvers exhibit suboptimal behavior, a failure that is due to two problems.
 First, the large observation space causes policy trees to become too wide and not deep enough.
 Second, the number of state particles used to represent beliefs collapses to one, causing overconfidence.
 The new algorithms, POMCPOW and PFT-DPW, handle these problems using progressive widening and weighted particle belief representations.
@@ -263,6 +263,7 @@ The final contribution is a software package, POMDPs.jl, which uses the features
 \include{multilane}
 \include{pomcpow}
 \include{pomdpsjl}
+\include{summary}
 
 % and the end material
 

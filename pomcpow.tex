@@ -8,8 +8,8 @@ This chapter takes some important steps toward addressing that need.
 POMCP and other online methods can easily accomodate continuous state spaces without any modification \cite{goldhoorn2014continuous}.
 However, there has been less progress on problems with continuous observation spaces.
 This chapter presents two similar algorithms which address the challenge of solving POMDPs with continuous state, action, and observation spaces.
-The first is based on POMCP and is called partially observable Monte Carlo planning with observation widening (POMCPOW). 
-The second solves the belief-space MDP and is called particle filter trees with double progressive widening (PFT-DPW).
+The first solves an approximation of the belief-space MDP and is called particle filter trees with double progressive widening (PFT-DPW).
+The second is based on POMCP and is called partially observable Monte Carlo planning with observation widening (POMCPOW). 
 
 \section{Background}
 
@@ -29,7 +29,7 @@ As a consequence, the solutions obtained resemble QMDP policies, and there is no
 POMCPOW and PFT-DPW overcome this issue by using the observation model to weight the particles used to represent beliefs.
 
 A small amount of previous research has sought online solutions to continuous POMDPs.
-ABT has been extended to use generalized pattern search for selecting locally optimal continuous actions, an approach which is especially effective in problems where high precision is important \cite{seiler2015online}.
+ABT has been extended to use generalized pattern search for selecting locally optimal continuous actions, an approach which is especially effective in problems where high precision is important \cite{seiler2015online,wang2018online}.
 Continuous observation Monte Carlo tree search (COMCTS) constructs observation classification trees to automatically partition the observation space in a POMCP-like approach, however it did not perform much better than a Monte Carlo rollout approach in experiments \cite{pas2012simulation}.
 
 \section{Algorithms}
@@ -147,7 +147,7 @@ exponentially surely in $n$, for every action $a$.
 \end{restatable}
 % \end{theorem}
 
-A proof of this theorem that leverages work by \citet{auger2013continuous} is given in \cref{sec:proof}, but I will provide a brief justification here.
+A proof of this theorem that leverages work by \citet{auger2013continuous} is given in \cref{sec:proof}, but a brief justification is provided here.
 The key is that belief nodes will contain only a single state particle (see \cref{fig:treecomp}).
 This is because, since the observation space is continuous with a finite density function, the generative model will (with probability one) produce a unique observation $o$ each time it is queried.
 Thus, for every generated history $h$, only one state will ever be inserted into $B(h)$ (line~\ref{lin:insertion}, \cref{alg:pomcpdpw}), and therefore $h$ is merely an alias for that state. 
@@ -493,7 +493,7 @@ POMCPOW and PFT-DPW overcome this limitation and outperform QMDP.
 Though POMCPOW only performs strictly best on one of the problems in \cref{sec:experiments}, it performs very well on all of them, so it might be considered the best overall algorithm in these tests.
 
 However there are still several shortcomings.
-First, I have not proven analytically that POMCPOW or PFT-DPW converges toward the optimal solution.
+First, there is no analytical proof given that POMCPOW or PFT-DPW converge toward the optimal solution.
 % , and, given the complexity of the proof for DPW in the fully-observable case \cite{auger2013continuous}, this seems to be a relatively challenging task.
 Second, double progressive widening is made more difficult in practice because of its tuning parameters.
 Third, the results from the Multilane experiment shows that DESPOT is able to find significantly better plans in more realistic problems.

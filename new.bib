@@ -1,3 +1,9 @@
+@String { icaps       = {International Conference on Automated Planning and Scheduling (ICAPS)} }
+@String { icra        = {IEEE International Conference on Robotics and Automation (ICRA)} }
+@String { rss         = {Robotics: Science and Systems} }
+@String { cdc         = {IEEE Conference on Decision and Control (CDC)} }
+@String { aaai        = {AAAI Conference on Artificial Intelligence (AAAI)} }
+
 @misc{faa2018small,
     title={Small Unmanned Aircraft Systems},
     howpublished={14 {C.F.R.} \S 107},
@@ -212,7 +218,7 @@ doi = {10.1137/15M1020575},
 @Inproceedings{schmerling2018multimodal,
 author = {Schmerling, E. and Leung, K. and Vollprecht, W. and Pavone, M.},
 title = {Multimodal Probabilistic Model-Based Planning for Human-Robot Interaction},
-booktitle = {International Conference on Robotics and Automation},
+booktitle = icra,
 year = {2018},
 abstract = {This paper presents a method for constructing human-robot interaction policies in settings where multimodality, i.e., the possibility of multiple highly distinct futures, plays a critical role in decision making. We are motivated in this work by the example of traffic weaving, e.g., at highway onramps/offramps, where entering and exiting cars must swap lanes in a short distance --- a challenging negotiation even for experienced drivers due to the inherent multimodal uncertainty of who will pass whom. Our approach is to learn multimodal probability distributions over future human actions from a dataset of human-human exemplars and perform real-time robot policy construction in the resulting environment model through massively parallel sampling of human responses to candidate robot action sequences. Direct learning of these distributions is made possible by recent advances in the theory of conditional variational autoencoders (CVAEs), whereby we learn action distributions simultaneously conditioned on the present interaction history, as well as candidate future robot actions in order to take into account response dynamics. We demonstrate the efficacy of this approach with a human-in-the-loop simulation of a traffic weaving scenario.},
 address = {Brisbane, Australia},
@@ -220,4 +226,44 @@ month = may,
 url = {../wp-content/papercite-data/pdf/Schmerling.Leung.Vollprecht.Pavone.ICRA18.pdf},
 owner = {schmrlng},
 timestamp = {2017-09-18},
+}
+
+@inproceedings{wang2018online,
+  title={An Online Planner for {POMDP}s with Large Discrete Action Space: A Quantile-Based Approach},
+  author={Wang, Erli and Kurniawati, Hanna and Kroese, Dirk P},
+  booktitle=icaps,
+  year={2018}
+}
+
+
+@inproceedings{sadigh2016safe,
+  title={Safe Control under Uncertainty with Probabilistic Signal Temporal Logic},
+  author={Sadigh, Dorsa and Kapoor, Ashish},
+  booktitle=rss,
+  year={2016}
+}
+
+@inproceedings{chen2015exact,
+author={M. Chen and C. J. Tomlin},
+booktitle=cdc,
+title={Exact and efficient Hamilton-Jacobi reachability for decoupled systems},
+year={2015},
+pages={1297-1303},
+doi={10.1109/CDC.2015.7402390},
+}
+
+
+@inproceedings{xiao2018memory,
+  title={Memory-Augmented {M}onte {C}arlo Tree Search},
+  author={Xiao, Chenjun and Mei, Jincheng and M{\"u}ller, Martin},
+  booktitle=aaai,
+  year={2018}
+}
+
+@inproceedings{bhattacharyya2018reward,
+  title={Reward Augmented Imitation Learning to Capture Emergent Properties in Multi-Agent Systems},
+  author={R. P. Bhattacharyya and D. J. Phillips and C. Liu, and M. J. Kochenderfer},
+  booktitle={Conference on Robot Learning},
+  year={2018},
+  note={In Preparation}
 }

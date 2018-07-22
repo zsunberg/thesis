@@ -2,7 +2,7 @@
 
 \section{Autonomous Vehicles}
 
-Transportation is one of the most important ingredients to human civilization.
+% Transportation is one of the most important ingredients to human civilization.
 In the past, vehicles used for transportation have been almost exclusively operated by humans.
 However, recent advances in sensing technology, computing power, mapping, data processing, and connectivity have made it possible to begin developing vehicles that are \emph{autonomous}, that is, they can perform a transportation task without requiring a human to control them.
 
@@ -25,7 +25,7 @@ In the United States, workers commute an average of more than \SI{25}{\minute} i
 Thus a large fraction of American workers use an hour of their day focused on operating a vehicle.
 With autonomous vehicles, this stressful time could be eliminated and replaced with productive time or relaxation.
 
-The final potential benefit I will mention is \textbf{expanding access to mobility}.
+The final potential benefit discussed here is \textbf{expanding access to mobility}.
 The requirement for a capable vehicle operator limits the ability for many people to use cars.
 For example, many people with permanent disabilities such as blindness or seizure disorders or even temporary injuries are precluded from the flexible personal point-to-point transportation afforded by cars, and this increases their dependence on caretakers.
 Autonomous cars would give these people safe personal transportation.
@@ -88,7 +88,7 @@ The first is criteria for good performance, and the second is a model of what is
 
 This thesis casts decision making problems as optimization problems.
 In other words, the criterion for good performance is choosing actions that maximize an objective function.
-The concrete structure that I adopt for this objective function is presented in \cref{sec:mdps}, but here a few words about defining it are in order.
+The concrete structure for this objective function is presented in \cref{sec:mdps}, but here a few words about defining it are in order.
 
 To define an objective function, an engineer must map the desires of human passengers or abstract societal goals like those described in \cref{sec:benefits} into a well-defined mathematical function.
 This is sometimes straightforward for individual goals such as minimizing the time to reach a destination.
@@ -334,7 +334,7 @@ Because the QMDP approximation assumes that all information about the state of t
 Nevertheless, the approximation is useful in many domains because it is much easier to compute than the full POMDP solution --- it requires only the solution to the fully observable MDP, which can usually be calculated efficiently using e.g. value iteration.
 Moreover the QMDP solution has acceptable quality for many domains (see \cref{tab:experiments}).
 
-\section{Contributions}
+\section{Contributions and Outline}
 
 The body of this thesis is laid out in four chapters.
 Each contains one or more contributions.
@@ -344,16 +344,17 @@ Specifically, the price of certifiability is quantified by optimizing the TRL an
 Simulation results then demonstrate that this gap can be largely closed without sacrificing certifiability by using the TRL as a safety constraint on the action space and solving the resulting MDP.
 
 \Cref{chap:multilane} considers the effects of modeling uncertainty in a difficult lane changing task for a self-driving car.
-Specifically, I estimate the value of planning with the internal states of other human drivers such as their intentions and dispositions.
+Specifically, the value of planning with the internal states of other human drivers such as their intentions and dispositions is estimated over a range of safety-efficiency tradeoff points.
 While several other researchers have used internal-state-aware planning methods to interact with human drivers in desirable ways, they have not evaluated whether these methods offer a substantial quantitative improvement in performance over conventional approaches.
-I show that, in a simplified simulated setting, planning with internal states using a POMDP formulation can significantly improve both safety and efficiency simultaneously.
-In particular, I evaluate planning with a POMDP model that includes state uncertainty against both overconfident and conservative MDP models that model all uncertainty as outcome uncertainty and show that using state uncertainty has a benefit over both.
+In a simplified simulated setting, planning with internal states using a POMDP formulation can significantly improve both safety and efficiency simultaneously.
+In particular, POMDP planning that includes state uncertainty is evaluated against both overconfident and conservative MDP models with only outcome uncertainty, showing that planning with state uncertainty has a benefit over both.
 The experimental method proposed here is also applicable to other cases in which internal-state-aware planning may improve performance.
 
 The benefits of POMDP planning can only be realized with algorithms that can handle real-world domains that are continuous and irregular.
 To that end, \Cref{chap:pomcpow} proposes a pair of new algorithms for solving POMDPs with continuous state, action, and observation spaces.
 These algorithms are motivated by analysis and numerical experiments that show that leading online POMDP solvers cannot handle continuous observation spaces.
-I prove that one of the previous solvers exhibits suboptimal behavior, and explain that the reason previous solvers fail on these problems is that they produce degenerate belief nodes with only a single state particle.
+Previous solvers are shown to exhibit suboptimal behavior, explained by degenerate belief nodes with only a single state particle.
+One particular solver is proven to converge to a known suboptimal approximation.
 The new algorithms, POMCPOW and PFT-DPW, handle this problem using progressive widening and weighted particle belief representations.
 Numerical experiments show that they are able to solve problems where previous methods fail.
 

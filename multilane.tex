@@ -30,16 +30,17 @@ Though this chapter uses a very simple model, there has been significant work on
 
 Before investing the effort required to develop and test a POMDP-based decision making system for real autonomous vehicles, it is important to quantify the potential performance improvement.
 This chapter presents a method that involves comparing solutions obtained from several variations of Monte Carlo Tree Search \cite{browne2012mcts}.
-For this research, I chose to investigate these ideas in the context of making lane changes on a freeway.
+For this research, these ideas are investigated in the context of making lane changes on a freeway.
 This situation that has been anecdotally noted to be difficult \cite{naughton2015freeway}, and a good candidate for improvement by reasoning about the actions of other drivers.
 For instance, a 2016 Google report noted that ``merging into traffic during rush hour is an exercise in negotiation.''~\cite{dolgov2016google}.
-I present a method for quantifying the performance gains that could result from perfect estimation of and planning with hidden behavior model parameters.
-In addition, I show that when model parameters are correlated, estimating the parameters online using physical measurements can greatly improve performance. Planning using a POMDP problem formulation that dynamically takes uncertainty into account can further improve performance.
+First, the performance gains that would result from perfect estimation of and planning with hidden behavior model parameters are estimated.
+In addition, the results show that when model parameters are correlated, estimating the parameters online using physical measurements can greatly improve performance.
+Planning using a POMDP problem formulation that dynamically takes uncertainty into account can further improve performance.
 
 \section{Freeway Driving POMDP} \label{sec:multilanepomdp}
 
 The focus of this chapter is on freeway driving.
-I investigate a scenario in which a vehicle must navigate from the rightmost to the leftmost lane of a four lane freeway within a specified distance while maintaining safety and comfort (see \cref{fig:scene}).
+In the scenario studied here, a vehicle must navigate from the rightmost to the leftmost lane of a four lane freeway within a specified distance while maintaining safety and comfort (see \cref{fig:scene}).
 
 \begin{figure}[tb]
     \centering
@@ -455,7 +456,8 @@ Both MDP solutions that ignore the internal states of other drivers, and POMDP s
 An upper performance bound is established by planning with full knowledge of the internal states.
 In order to remain agnostic with regard to the relative importance of safety and efficiency, Pareto frontiers are compared.
 
-The advantage of POMDP approaches over both conservative and overly confident MDP approaches is clear in all of the tests.
+POMDP approaches are compared to both conservative MDP formulations that model internal state uncertanty as outcome uncertainty and overly confident MDP approaches where knowledge of the internal state is assumed
+The advantage of the POMDP approaches is clear in all of the tests.
 However, the relative effectiveness of different POMDP approaches is heavily dependent on the correlation of the distributions of the internal states.
 If the internal states are highly correlated, simply estimating them with a particle filter and planning assuming certainty equivalence is adequate to nearly match the upper performance bound.
 On the other hand, when the parameters are uncorrelated, the QMDP planner performs much better than the certainty equivalence planner, and POMCPOW performs much better than QMDP.
