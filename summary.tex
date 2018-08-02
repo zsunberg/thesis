@@ -1,40 +1,43 @@
 \chapter{Summary and Future Work}
 
-In order to bring the myriad benefits of autonomous transportation, the control systems of autonomous vehicles must provide comprehensive safety.
-However, if this safety brings too great a sacrifice in efficiency, the vehicles will not be adopted as widely or be as useful if they are.
-This thesis investigates methods for improving safety while sacrificing minimal efficiency, specifically by proposing better methods for handling the uncertainty inherent in the environment autonomous vehicles operate in.
-In addition, the thesis proposes improved algorithms for solving the optimization problems that vehicle control entails and describes the software framework created to make education and research collaboration in this area easier.
+In order to realize benefits of autonomous transportation, the control systems of autonomous vehicles must be safe.
+However, if this safety brings too great a sacrifice in efficiency, the vehicles will not be adopted as widely or be as useful.
+This thesis investigated approaches for improving safety while sacrificing minimal efficiency, specifically by proposing better methods for handling the uncertainty inherent in the environment autonomous vehicles operate in.
+In addition, the thesis proposed improved algorithms for solving the optimization problems that arise from vehicle control problems
+Finally, it described the software framework created to make education and research collaboration in this area easier.
 The remainder of this chapter reviews the specific contributions of this thesis and outlines potential future research directions.
 
 \section{Contributions and Summary}
 
-The first contribution is an investigation into how trusted resolution logic for UAV collision avoidance can be best combined with optimization.
+The first contribution (\cref{chap:uav}) is an investigation into the combination of trusted resolution logic and optimization for UAV collision avoidance.
 Simple TRL has the advantage that guarantees about its operation are relatively easy to certify.
-However, a comparison between simple TRL alone and MDP optimization alone shows that there is a price in terms of both safety and efficiency accrued for using the TRL alone.
-Two methods for combining the two approaches are also investigated.
-The first is to use the MDP to adjust the parameters of the TRL to dynamically adjust its conservativeness.
+However, a comparison between simple TRL alone and MDP optimization shows that there is a price in terms of both safety and efficiency accrued for using the TRL.
+To reduce this price, two methods for combining the approaches are investigated.
+The first is to use an MDP policy to dynamically adjust the parameters of the TRL that govern its conservativeness.
 The second is to use the TRL as a constraint on the actions that the MDP policy can choose.
 Simulation experiments show that the second approach is superior.
 
-The second contribution is a study of uncertainty modeling in decision making for autonomous highway lane changing.
-This chapter compares approximate POMDP solutions, where the internal states of other drivers are included are explicitly modeled as a hidden part of the Markov state, with approximate MDP solutions, both assuming full knowledge of the internal state and conservatively modeling state uncertainty as outcome uncertainty.
+The second contribution (\cref{chap:multilane}) is a study of uncertainty modeling in decision making for autonomous highway lane changing.
+This chapter considered approximate POMDP solutions where the internal states of other drivers are explicitly modeled as a hidden part of the Markov state.
+The POMDP solutions are compared with approximate MDP solutions, both assuming full knowledge of the internal state and conservatively modeling state uncertainty as outcome uncertainty.
 The advantage of POMDP solutions over MDP solutions is clear in all of the tests, but the relative effectiveness of different POMDP approximations depends greatly on the correlation of the different internal state parameters.
 Simulation tests show that when the parameters are highly correlated, since it is easier to estimate the hidden states, even greatly simplified POMDP approximations can achieve performance near the upper bound established by an omnipotent planner.
 On the other hand, when there is little or no correlation, POMDP solution methods that include more of the uncertainty in the solution process perform significantly better.
+Experiments also characterize the robustness of the algorithms with respect to the parameter distribution.
 
-The third contribution is an improved algorithm for solving these POMDPs online.
+The third contribution (\cref{chap:pomcpow}) is a pair of improved algorithms for solving POMDPs online.
 Previous leading online algorithms have focused on solving discrete problems, and are unable to solve problems with continuous action and observation spaces.
 Hence, new algorithms for the continuous domains encountered in the real world are needed.
-The first part of this contribution is proving that a naive application of double progressive widening to the POMCP algorithm will result in suboptimal behavior.
-In particular, in a continuous observation space, it will converge to the QMDP solution because each belief node will degenerate to a single state particle.
+The first part of this contribution (\cref{sec:pomcpdpw}) is proving that a naive application of double progressive widening to the POMCP algorithm will result in suboptimal behavior.
+In particular, in a continuous observation space, it will converge to the QMDP solution because each belief node will degenerate to a single state particle (\cref{thm:qmdp}).
 In fact, numerical experiments confirm that all leading online solvers exhibit this behavior.
 
-In response to this, two new algorithms are proposed.
+In response to this suboptimality, two new algorithms are proposed (\cref{sec:pftdpw,sec:pomcpow}).
 The first, PFT-DPW, solves an approximation of the belief MDP, while the second, POMCPOW, is an extension of POMCP with double progressive widening and weighted particle filtering.
-Numerical experiments show that these algorithms are able to break the QMDP barrier and hence exhibit performance that is qualitatively superior to previous algorithms.
-POMCPOW and PFT-DPW perform similarly on most problems, but on the most realistic problem, a version of the lane changing problem from~\cref{chap:multilane}, POMCPOW outperforms PFT-DPW.
+Numerical experiments (\cref{sec:experiments}) show that these algorithms are able to break the QMDP barrier and hence exhibit performance that is qualitatively superior to previous algorithms.
+POMCPOW and PFT-DPW perform similarly on most problems, but on the most realistic problem, a version of the autonomous driving problem from~\cref{chap:multilane}, POMCPOW outperforms PFT-DPW.
 
-The final contribution is a software framework, POMDPs.jl, which provides an interface for expressing MDPs and POMDPs and tools for developing and testing solvers.
+The final contribution (\cref{chap:pomdpsjl}) is a software framework, POMDPs.jl, which provides an interface for expressing MDPs and POMDPs and tools for developing and testing solvers.
 This framework is unprecedented in its flexibility.
 It can represent discrete and continuous MDPs defined by both explicit probability distributions and simulators that provide generative models.
 The Julia language also gives solvers written to use the framework speed comparable to previous C++ implementations.
@@ -43,31 +46,37 @@ The Julia language also gives solvers written to use the framework speed compara
 
 There are many promising directions for future work to proceed from the results presented in this thesis.
 The discussion portion of each chapter gives short-term specific extensions to the individual research efforts described therein.
-This section gives a wider and longer-term overview.
+This section gives a broader overview.
 
-The interaction of safety constraints with sequential optimization is explored in \cref{chap:uav} and such constraints are used in \cref{chap:multilane}.
-However, the actual constraints used there are highly simplified.
+The first line of future work involves \textbf{safety constraints}.
+Interaction of safety constraints with sequential optimization is explored in \cref{chap:uav} and such constraints are used in \cref{chap:multilane}.
+However, the actual constraints used there are very simple.
 In real problems, these constraints will need to be more complex, consisting of, for example, linear temporal logic rules~\cite{sadigh2016safe} or results from reachability analysis~\cite{chen2015exact}.
 Combining approximate POMDP solutions with these advanced safety constraints to field a reliable system still requires much research.
 
-\Cref{chap:uav,chap:multilane} evaluate their findings based on simplistic models of other vehicles.
+The second line is focused on \textbf{modeling}. \Cref{chap:uav,chap:multilane} evaluate their findings based on simplistic models of other vehicles.
 To solidify the conclusions of this thesis, better data-driven models of human drivers and pilots must be created.
-Indeed, significant work has already been done in this area~\cite{schmerling2018multimodal,bhattacharyya2018reward}. 
+Indeed, significant work has already been done in this area~\cite{schmerling2018multimodal,bhattacharyya2018multi}. 
 However, these models are limited in scope, primarily because of the limited data available.
 In order to be able to test in more diverse scenarios, more data will need to be collected from the real world, and models that are more data-efficient developed.
-Moreover, not every planning algorithm will work with every model so planning algorithms and models must be developed aside one another to work together.
+Moreover, current planning algorithms will not work efficiently with certain models.
+A particular example is that recurrent neural networks with latent states the represent beliefs over internal states~\cite{schmerling2018multimodal} will not work with the POMDP algorithms used in this thesis.
+Thus, new algorithms must be developed to work with the new models.
 
-While the algorithms proposed in \cref{chap:pomcpow} demonstrate better performance than previous algorithms, the shortcomings of this family of algorithms also became apparent.
-In particular, algorithms based on MCTS-DPW have many tuning parameters which must be tuned by hand, which is unreliable, or optimized, which is time consuming.
+The third direction is continuing the development of better \textbf{POMDP algorithms}.
+While the algorithms proposed in \cref{chap:pomcpow} demonstrate better performance than previous algorithms, the shortcomings of this family of algorithms are also apparent.
+In particular, algorithms based on MCTS-DPW have many tuning parameters that must be chosen via unreliable hand tuning or time consuming optimization.
 In addition, the proof of consistency for MCTS-DPW~\cite{auger2013continuous} is rather tedious, which is one of the reasons that an analytical proof for the optimality of POMCPOW was not attempted for this thesis.
 Moreover, the trees produced by these algorithms tend to be shallow, reducing the effective planning horizon.
-As seen in the experimental results for the multilane model in \cref{tab:experiments}, DESPOT is able to perform better on more realistic problems because it builds deeper trees, explores based on bounds rather than upper confidence estimates, and the fixed number of scenarios may also make analysis easier.
+As seen in the experimental results for the multilane model in \cref{tab:experiments}, DESPOT is able to perform better on more realistic problems because it builds deeper trees and explores based on bounds rather than upper confidence estimates.
+DESPOT's fixed number of scenarios may also make analysis easier.
 Given these advantages, the particle filter weighting approaches used in PFT-DPW and POMCPOW should be applied to more advance algorithms like DESPOT to enable them to explore in continuous observation spaces.
 Furthermore, all of the algorithms discussed in this thesis use a single execution thread. In order to take advantage of modern computing hardware, online parallel algorithms for solving POMDPs must be investigated.
 
 Finally, the problem of controlling autonomous vehicles in continuous, partially observable domains has by no means been solved.
-This thesis focused on continuous state and observation spaces, but the action space is arguably the most difficult part of the problem to handle continuity in.
-Some research has begin to address this~\cite{seiler2015online,wang2018online}, but it is difficult to imagine that precise control on continuous spaces using only derivative-free optimization techniques.
+One reason is the weakness of decision-making \textbf{algorithms for continuous spaces} that can handle uncertainty and irregularity.
+This thesis focused on continuous state and observation spaces, but the action space is arguably the most difficult context for continuity.
+Some research has begun to address this~\cite{seiler2015online,wang2018online}, but these algorithms use only derivative-free optimization techniques that may not scale to high dimensional problems.
 In many continuous problems, if history $h_1$ consists of actions and observations near the actions and observations of history $h_2$, the value at $h_1$ will be very close to the value at $h_2$.
 This information is not exploited in any of the online solvers discussed in this thesis.
-Although some work has been done to use this information in MCTS~\cite{xiao2018memory}, new algorithms that use ideas from optimal control and model predictive control may be much better suited for continuous problems.
+Although some work has been done to use this information in MCTS~\cite{xiao2018memory}, new algorithms that use ideas from optimal control, model predictive control, and motion planning may be much better suited for continuous problems.

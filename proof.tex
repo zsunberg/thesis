@@ -1,7 +1,7 @@
 \chapter{Proof of Theorem 1} \label{sec:proof}
 
 A version of Monte Carlo tree search with double progressive widening has been proven to converge to the optimal value function on fully observable MDPs by \citet{auger2013continuous}.
-We utilize this proof to show that POMCP-DPW converges to a solution that is sometimes suboptimal.
+We use this proof to show that POMCP-DPW converges to a solution that is sometimes suboptimal.
 
 First we establish some preliminary definitions taken directly from \citet{auger2013continuous}.
 
@@ -21,7 +21,7 @@ In order for the proof from \citet{auger2013continuous} to apply, the following 
 \begin{enumerate}
     \item Instead of the usual logarithmic exploration, use \emph{polynomial exploration}, that is, select actions based on the criterion
     \begin{equation}
-        Q(ha) + \sqrt{\frac{N(h)^{e_d}}{N(ha)}}
+        Q(ha) + \sqrt{\frac{N(h)^{e_d}}{N(ha)}}\text{,}
     \end{equation}
     as opposed to the traditional criterion
     \begin{equation}
@@ -31,7 +31,7 @@ In order for the proof from \citet{auger2013continuous} to apply, the following 
 
     \item Instead of performing rollout simulations, keep creating new single-child nodes until the maximum depth is reached.
 
-    \item In line~\ref{lin:selecto}, instead of selecting an observation randomly, select the observation that has been visited least proportionally to how many times it has been visited.
+    \item In line~\ref{lin:selecto}, instead of selecting an observation randomly, select the observation that has been visited least proportionally to how many times it has been generated.
 
     \item Use the depth-dependent coefficient values in Table 1 from \citet{auger2013continuous} instead of choosing static values.
 \end{enumerate}
@@ -70,7 +70,7 @@ This version of the algorithm will be referred to as ``modified POMCP-DPW''. The
             \Else
                 \State $o \gets \underset{o \in C(ha)}{\argmin}\, N(hao)/M(hao)$
                 \State $s' \gets \text{select } s' \in B(hao) \text{ w.p. } \frac{1}{|B(hao)|}$
-                \State $r \gets R(s,a,s')$
+                \State $r \gets \reward(s,a,s')$
             \EndIf
             \State $total \gets r + \gamma \Call{Simulate}{s', hao, d-1}$
             \State $N(h) \gets N(h)+1$
@@ -97,7 +97,7 @@ We now define the ``QMDP value'' that POMCP-DPW converges to (this is repeated f
     Because of this, lines~\ref{lin:gencount}~and~\ref{lin:minsertion} of \cref{alg:mpomcpdpw} will only be executed once for each observation.
 \end{proof}
 
-We are now ready to restate and prove the theorem from the text.
+We are now ready to restate the theorem from the text.
 
 % \begin{theorem}[Modified POMCP-DPW convergence to QMDP] \label{thm:pqmdp}
 % If a bounded-horizon POMDP meets the following conditions: 1) the state and observation spaces are continuous with a finite observation probability density function, and 2) the regularity hypothesis is met, then modified POMCP-DPW will produce a value function estimate, $\hat{Q}$, that converges to the QMDP value for the problem.
@@ -109,6 +109,12 @@ We are now ready to restate and prove the theorem from the text.
 % \end{theorem}
 
 \qmdp*
+
+The bound on the value estimate error, $\frac{C}{n^{1/(10d_{\max}-7)}}$,
+% \begin{equation}
+%     \frac{C}{n^{1/(10d_{\max}-7)}}
+% \end{equation}
+is based on the specific coefficients chosen by \citet{auger2013continuous} and listed in Table 1 of their paper. Alternative bounds may be possible with different coefficient choices. The proof of the theorem is given below.
 
 \begin{proof}
     We prove that modified POMCP-DPW functions exactly as the Polynomial UCT (PUCT) algorithm defined by \citet{auger2013continuous} applied to an augmented fully observable MDP, and hence converges to the QMDP value.
@@ -135,7 +141,7 @@ We are now ready to restate and prove the theorem from the text.
 
     \begin{enumerate}
         \item Eliminate the state count $M$. \emph{Justification}: By \cref{lem:onestate}, its value will be 1 for every node.
-        \item Remove $B$ and replace with a mapping $H$ from each node to a state of $\mathcal{M}$; define $H(b) = b$. \emph{Justification}: By \cref{lem:onestate} $B$ always contains only a single state, so $H$ contains the same information.
+        \item Remove $B$ and replace with a mapping $H$ from each node to a state of $\mathcal{M}$; define $H(b) = b$. \emph{Justification}: By \cref{lem:onestate}, $B$ always contains only a single state, so $H$ contains the same information.
         \item Generate states and rewards with $G_\mathcal{M}$, the generative model of $\mathcal{M}$, instead of $G$. \emph{Justification}: Since the state transition model for the fully observable MDP is the same as the POMDP, these are equivalent for all $s \in \mathcal{S}$.
         \item Remove the $s$ argument of \textproc{Simulate}. \emph{Justification}: The sampling in line~\ref{lin:msample} is done implicitly in $G_\mathcal{M}$ if $h=b$, and $s$ is redundant in other cases because $h$ can be mapped to $s$ through $H$.
     \end{enumerate}
@@ -175,7 +181,7 @@ We are now ready to restate and prove the theorem from the text.
                 \State $C(ha) \gets C(ha) \cup \{o\}$
             \Else
                 \State $o \gets \underset{o \in C(ha)}{\argmin}\, N(hao)$
-                \State $r \gets R(H(h), a, H(hao))$
+                \State $r \gets \reward(H(h), a, H(hao))$
             \EndIf
             \State $total \gets r + \gamma \Call{Simulate}{hao, d-1}$
             \State $N(h) \gets N(h)+1$

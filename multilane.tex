@@ -1,11 +1,12 @@
-\chapter{Planning with Internal States in Freeway Driving} \label{chap:multilane}
+% \chapter{Planning with Internal States in Freeway Driving} \label{chap:multilane}
+\chapter{Planning with Internal States in Driving} \label{chap:multilane}
 
 The second in-depth investigation of this thesis is in the area of autonomous driving.
-\cref{chap:uav} focuses on finding the best way to integrate certifiable safety constraints, but uses a simplistic stochastic model for the other agent the UAV interacts with.
-This chapter keeps the safety constraint architecture discovered in the last chapter as a constraint on the action space (\cref{sec:actions}), but it focuses on investigating a richer stochastic model.
+\cref{chap:uav} focuses on finding the best way to integrate certifiable safety constraints, but uses a simplistic stochastic model for the intruder the UAV interacts with.
+This chapter keeps the safety constraint architecture discovered in the last chapter as a constraint on the action space that guarantees there will be no crashes (\cref{sec:action}), but the chapter focuses primarily on investigating a richer stochastic model.
 In particular, it demonstrates the advantage of using a model with other agents' internal states represented using state uncertainty in the problem formulation.
 
-\section{Human-Robot Interaction in Autonomous Driving}
+\section{Human Interaction in Autonomous Driving}
 
 One challenge in introducing autonomous automobiles is ensuring that they interact safely with human drivers.
 In order to navigate complex driving scenarios, human drivers routinely predict what other drivers will do and make driving decisions based on these predictions.
@@ -25,17 +26,22 @@ Though sensors can accurately measure many of the relevant variables pertaining 
 The hypothesis explored in this chapter is that inferring and planning with an estimate of the internal states of the traffic participants will improve safety and efficiency.
 
 Driving strategies derived from MDPs and POMDPs depend on several ingredients to be successful.
-First, an accurate stochastic model of the environment, including the behavior of other drivers is necessary. 
-Though this chapter uses a very simple model, there has been significant work on creating better models in recent years \cite{grindele2015trafficmodel, WheelerRobbelKochenderfer2015, sadigh2014}, and the POMDP planning methods used here can easily be adapted to use these new models.
+First, an accurate stochastic model of the environment, including the behavior of other drivers, is necessary. 
+Though this chapter uses a very simple model, there has been significant work on creating better models in recent years \cite{grindele2015trafficmodel, WheelerRobbelKochenderfer2015, sadigh2014}, and the POMDP planning methods used here can be adapted to use these new models.
 
 Before investing the effort required to develop and test a POMDP-based decision making system for real autonomous vehicles, it is important to quantify the potential performance improvement.
-This chapter presents a method that involves comparing solutions obtained from several variations of Monte Carlo Tree Search \cite{browne2012mcts}.
+This chapter presents a method that involves comparing solutions obtained from several variations of Monte Carlo Tree Search \cite{browne2012survey}.
 For this research, these ideas are investigated in the context of making lane changes on a freeway.
 This situation that has been anecdotally noted to be difficult \cite{naughton2015freeway}, and a good candidate for improvement by reasoning about the actions of other drivers.
 For instance, a 2016 Google report noted that ``merging into traffic during rush hour is an exercise in negotiation.''~\cite{dolgov2016google}.
-First, the performance gains that would result from perfect estimation of and planning with hidden behavior model parameters are estimated.
-In addition, the results show that when model parameters are correlated, estimating the parameters online using physical measurements can greatly improve performance.
-Planning using a POMDP problem formulation that dynamically takes uncertainty into account can further improve performance.
+
+The experiments in this chapter are conducted as follows:
+First, as a baseline for evaluation, the performance gains that would result from perfect estimation of and planning with internal states are estimated.
+Next, simulations evaluate whether a particle filter can be used to estimate internal parameters using physical measurements.
+Finally, the performance gain from using QMDP and POMDP problem formulations to plan with these internal state estimates is assessed.
+
+% Next, simulation  estimating the parameters online using physical measurements integrated with a particle filter can greatly improve performance, especially when model parameters are correlated.
+% Furthermore, planning using a POMDP problem formulation that dynamically takes uncertainty into account can further improve performance.
 
 \section{Freeway Driving POMDP} \label{sec:multilanepomdp}
 
@@ -58,7 +64,7 @@ The physical state, $$\ith{\phys} = (\ith{x},\ith{y},\ith{\dot{x}},\ith{\dot{y}}
     \item The action space, $\aspace$: An action, $u = (\ego{\ddot{x}}, \ego{\ddot{y}}) \in \aspace$, consists of the longitudinal acceleration and lateral velocity of the \av{} vehicle. The action space is discrete and pruned to prevent crashes (see \cref{sec:action}).
     \item The state transition model, $\tdist: \sspace \times \aspace \times \sspace \to \reals$: The value $\tdist(s,u,s')$ is the probability of transitioning to state $s'$ given that action $u$ is taken by the \av{} at state $s$. This function is implicitly defined by a generative model that consists of a state transition function, $F(\cdot)$, and a stochastic noise process (see \cref{sec:dynamics}).
     \item The reward model, $\reward:\sspace \times \aspace \times \sspace \to \reals$: The reward function, defined in \cref{sec:reward}, rewards reaching the left lane within the distance limit and penalizes unsafe actions.
-    \item The observation space, $\ospace$: An observation, $o \in \ospace$ consists of the physical states of all of the vehicles, that is $o=\{p_i\}_{i \in 1..N}$. No information about the internal state is directly included in the observation.
+    \item The observation space, $\ospace$: An observation, $o \in \ospace$ consists of the physical states of all of the vehicles, that is $o=\{q_i\}_{i \in 1..N}$. No information about the internal state is directly included in the observation.
     \item The observation model, $Z: S \times O \to \mathbb{R}$: The value $Z(s',o)$ is the probability of receiving observation $o$ when the system transitions to state $s'$. In these experiments, the physical state is assumed to be known exactly, though it is not difficult to relax this assumption. %Hence, $Z(s',o) = \delta_{\phys'}(o)$ where $\delta_{\phys'}$ is a Dirac delta function with the origin at $\phys'$.
 \end{itemize}
 The remainder of this section elaborates on this model.
@@ -94,7 +100,7 @@ where $w$ is a random variable with a triangular distribution with support betwe
 \subsubsection{MOBIL}
 
 The MOBIL model makes the decision to change lanes based on maximizing the acceleration for the vehicle and its neighbors.
-When considering a lane change, MOBIL first ensures that the safety criterion $\tilde{\ddot{x}}_\text{follow} \geq -b_\text{safe}$, where $\ddot{x}_n$ will be the acceleration of the following car if the lane change is made and $b_\text{safe}$ is the safe braking limit. 
+When considering a lane change, MOBIL first ensures that the safety criterion $\tilde{\ddot{x}}_n \geq -b_\text{safe}$, where $\tilde{\ddot{x}}_n$ will be the acceleration of the following car if the lane change is made and $b_\text{safe}$ is the safe braking limit. 
 It then makes the lane change if the following condition is met
 \begin{equation}
     \tilde{\ddot{x}}_c - \ddot{x}_c + p \left( \tilde{\ddot{x}}_n - \ddot{x}_n + \tilde{\ddot{x}}_o - \ddot{x}_o \right) > \Delta a_\text{th}
@@ -110,7 +116,7 @@ The longitudinal dynamics assume constant acceleration, and the lateral dynamics
 \begin{eqnarray*}
     x'&=&x + \dot{x} \dt + \frac{1}{2} \ddot{x} \dt^2 \\
     \dot{x}'&=&\dot{x} + \ddot{x} \dt \\
-    y'&=&y + \dot{y} \dt \text{.}
+    y'&=&y + \dot{y} \dt \, \text{.}
 \end{eqnarray*}
 
 There is a physical limit to the braking acceleration, $\bmax$.
@@ -135,7 +141,7 @@ Once the \av{} reaches the target lane ($y = y_\text{target}$) or passes the dis
 
 For convenience, throughout this chapter, the behavior described so far will be denoted compactly by the state transition function
     \begin{equation}
-        s' = F(s,u,w) \text{.}
+        s' = F(s,u,w) \, \text{.}
     \end{equation}
 
 \subsection{Action Space for Crash-Free Driving} \label{sec:action}
@@ -145,6 +151,7 @@ For simplicity, the vehicle chooses from up to ten discrete actions which are sh
 The vehicle may make an incremental decrease or increase in speed or maintain speed, and it may begin a left or right lane change or maintain the current lane.
 The combination of these adjustments make up nine of the actions.
 The final action is a braking action determined dynamically based on the speed and position of the vehicle ahead.
+In most cases, the acceleration for this action is a nominal value, $-b_\text{nominal}$, but this is sometimes overridden.
 At each time step, the maximum permitted acceleration, $a_\text{max}$, is the maximum acceleration that the \av{} could take such that, if the  vehicle ahead immediately begins braking at the physical limit, $\bmax$, to a stop, the \av{} will still be able to stop before hitting it without exceeding physical braking limits itself.
 The braking action is $(\ego{\ddot{x}}, \ego{\ddot{y}}) = (\min \{a_\text{max}, -b_\text{nominal} \}, 0)$.
 
@@ -173,7 +180,7 @@ In addition to quantifying safety, hard braking also serves as a proxy for comfo
 
 In order to encourage the planner to choose actions that will maximize these metrics, the reward function for the POMDP is defined as follows: 
 \begin{equation} \label{eqn:reward}
-    % R(s, s') = \mathbf{1}(\ego{y}=y_\text{target}) - \lambda \sum_{i=1}^N \mathbf{1}(\ith{\dot{x}}'- \ith{\dot{x}} < -b_\text{hard} \Delta t) \text{.}
+    % \reward(s, s') = \mathbf{1}(\ego{y}=y_\text{target}) - \lambda \sum_{i=1}^N \mathbf{1}(\ith{\dot{x}}'- \ith{\dot{x}} < -b_\text{hard} \Delta t) \text{.}
     \reward(s, a, s') = \text{in\_goal}(s') - \lambda \left(\text{any\_hard\_brakes}(s, s') + \text{any\_too\_slow}(s')\right)
 \end{equation}
 where
@@ -191,7 +198,7 @@ Initial scenes for the simulations are generated by beginning a simulation with 
 
 \section{Solution Approaches} \label{sec:solution}
 
-Each of the solution techniques is based on MCTS-DPW (\cref{sec:mcts,sec:uct,sec:dpw}), but handles uncertainty in the internal states differently.
+Each of the solution techniques is based on MCTS-DPW (\cref{sec:mcts}), but handles uncertainty in the internal states differently.
 
 \subsection{Approach 1: Assume normal behavior}
 
@@ -204,11 +211,12 @@ This is an overconfident baseline --- it plans assuming it knows more about the 
 The second performance baseline is established by planning as if all uncertainty is simply outcome uncertainty, that is, as if the problem were an MDP with a state consisting only of the physical state and the internal states random variables, independent at each timestep, distributed according to the internal state distribution $\Theta$. 
 This model would be the result of fitting a Markov model with only the physical state based on data from all drivers.
 The MDP is again solved using the MCTS-DPW algorithm.
+This is a conservative baseline --- it plans assuming it can learn nothing new about the drivers.
 
 \subsection{Approach 3: Mean Model Predictive Control} \label{sec:mpc}
 
-Since information about the human's internal state can be inferred by observing the car's physical motion, performance superior to either of the baselines can be achieved by estimating $\beh$ online.
-This is accomplished with a particle filter (see \cref{sec:particle}, \cite{thrun2005probabilistic}).
+Since information about a human's internal state can be inferred by observing a car's physical motion, performance superior to either of the baselines can be achieved by estimating $\beh$ online.
+This is accomplished with a particle filter (\cref{sec:particle}).
 Filtering is independent for each car, but all of the behavior parameters for a given car are estimated jointly.
 There are two versions of the filter.
 In the first version, a particle, $\hat{\theta}$, consists of values of all model parameters.
@@ -217,13 +225,6 @@ In the second version, all parameters are assumed perfectly correlated (see \cre
 The belief at a given time consists of the exactly known physical state, \phys, and a collection of $M$ particles, $\{\hat{\theta}^k\}_{k=1}^M$, along with associated weights, $\{W^k\}_{k=1}^M$.
 To update the belief when action $u$ is taken, $M$ new particles are sampled with probability proportional to the weights, and sampled noise values $\{\hat{w}^k\}_{k=1}^M$ are used to generate new states according to ${\hat{s}^k}{'} = F((\phys, \hat{\theta}^k), u, \hat{w}^k)$.
 The new weights are determined by approximating the conditional probability of the particle given the observation:
-% \begin{equation*}
-% {W^k}{'} = \left.
-% \begin{cases}
-% \exp\left(- \frac{(\dot{x}'-\hat{\dot{x}}')^2}{2 \sigma_\text{vel}^2} \right) & \text{if } y' = \hat{y}' \\
-% \gamma_\text{lane} \exp\left(- \frac{(\dot{x}'-\hat{\dot{x}}')^2}{2 \sigma_\text{vel}^2} \right) & \text{o.w.}
-% \end{cases} \right\} \appropto \operatorname{Pr}\left(\left.\hat{\theta}^k \right| o \right)
-% \end{equation*}
 \begin{equation*}
 {W^k}{'} = \left.
 \begin{cases}
@@ -233,8 +234,6 @@ The new weights are determined by approximating the conditional probability of t
 \end{equation*}
 where $\dot{x}'$ and $y'$ are taken from the observation, $\hat{\dot{x}}'$ and $\hat{\dot{y}}'$ are from ${\hat{s}^k}{'}$, the max expression is proportional to the probability density of the acceleration noise triangular distribution (ignoring the effects of the collision mitigation modifications), and $\gamma_\text{lane} \in [0,1]$ is a hand-tuned parameter that penalizes incorrect lane changes (see \cref{tab:params}).
 
-% the below paragraph is not true anymore
-% In order to prevent particle deprivation, during the resampling step, Gaussian noise with standard deviation proportional to the sample standard deviation of the current particle set is added to \SI{10}{\percent} of the new samples.
 
 Model predictive control (MPC) is a widely used family of control techniques that use an imperfect model and feedback measurements to choose actions \cite{garcia1989model}. At each time step, a model predictive controller calculates a sequence of control actions that will maximize a reward function of the states visited up to a future horizon given that the system behaves according to a model. The first control action in this optimized sequence is executed, and the process is repeated after a new measurement is received.
 
@@ -270,15 +269,18 @@ Scenario 3 uses a distribution between these two extremes.
 In this scenario, values are drawn from a Gaussian copula with covariance matrix
 \begin{equation}
     \Sigma = \begin{bmatrix}
-        1 & \dots & \rho \\
-        \vdots & \ddots & \vdots \\
-        \rho & \dots & 1
+        1 & \rho & \dots & & \rho \\
+        \rho & 1 & &  &  \\
+        \vdots &  & \ddots & & \vdots \\
+           & & & 1 & \rho \\
+        \rho & & \dots & \rho & 1
     \end{bmatrix}\text{,}
 \end{equation}
 that is, a matrix with 1 along the diagonal and $\rho$ elsewhere.
 The values are then scaled and translated to lie between the aggressive and normal limits.
 For Scenario 3, the value of $\rho$ is \num{0.75}, and Scenarios 1 and 2 can be thought of as limiting cases where $\rho$ approaches 0 and 1, respectively.
-In Scenario 1, the first version of the particle filter, which estimates all of the model parameters jointly, is used, whereas in Scenarios 2 and 3, the second version of the particle filter that assumes fully correlated parameters is used, that is, it only estimates a single ``aggressiveness'' parameter for each car.
+In Scenarios 1 and 3, the first version of the particle filter, which estimates all of the model parameters jointly, is used, whereas in Scenario 2, the second version of the particle filter that assumes fully correlated parameters is used, that is, it only estimates a single ``aggressiveness'' parameter for each car.
+The mean MPC planner uses this ``aggressiveness'' parameter for all scenarios because this resulted in better performance.
 The small scatter plots in \cref{fig:gaps,fig:075} illustrate the level of correlation by plotting sampled values of two of the parameters.
 
 \begin{table}[tbph]
@@ -334,7 +336,7 @@ The small scatter plots in \cref{fig:gaps,fig:075} illustrate the level of corre
     \label{tab:params}
 \end{table}
 
-\subsection{Performance Results}
+\subsection{Pareto Front Comparison}
 
 \begin{figure}[p]
     \centering
@@ -364,10 +366,8 @@ The small scatter plots in \cref{fig:gaps,fig:075} illustrate the level of corre
 \end{figure}
 
 
-\Cref{fig:gaps,fig:075} show approximate Pareto curves illustrating the performance in terms of safety and efficiency of each of the approaches described in \cref{sec:solution}.
-Each of the points on the curve shows the results of \num{5000} independent simulations of the scenario with the given safety-efficiency tradeoff weight, $\lambda$.
-
-\subsubsection{Control approach comparison}
+\Cref{fig:gaps,fig:075} show approximate Pareto fronts illustrating the performance in terms of safety and efficiency of each of the approaches described in \cref{sec:solution}.
+Each of the points on the curve shows the results of \num{5000} independent simulations of the scenario with a particular safety-efficiency tradeoff weight, $\lambda$.
 
 The baseline and upper bound approaches perform as expected.
 The baseline planner that assumes all vehicles act with normal behavior parameters creates over-confident plans.
@@ -377,28 +377,30 @@ That is, it can attain a high level of safety, but it is never able to meet the 
 The omniscient upper bound planner achieves performance equal to or greater than all other approaches.
 
 As expected, better plans are attained as more accurate uncertainty is modeled in planning.
-The mean MPC approach usually performs better than the baselines because it estimates the model parameters based on the physical states it observes, but it is still overconfident (achieving a high success rate, but sacrificing safety) because it plans without any internal state uncertainty. 
+The mean MPC approach usually performs better than the baselines because it dynamically estimates the model parameters, but it is still overconfident (achieving a high success rate, but sacrificing safety) because it plans without any internal state uncertainty. 
 QMDP performs better than mean MPC because it considers samples from the entire estimated internal state distribution when planning.
 Since the vehicle does not have to take costly information-gathering actions to accomplish its goal, POMCPOW only rarely outperforms QMDP.
 
 \subsubsection{Convexity violations}
 
 One immediate concern that should be raised about the approximate Pareto frontiers in \cref{fig:gaps,fig:075} is that they are not all convex.
-In an optimization problem where the objective is a linear combination of several performance metrics, all optimal solutions for all possible linear combinations of objectives must lie on the boundary of their mutual convex hull (see \citet{boyd2004convex}, Example 2.27).
+% In an optimization problem where the objective is a linear combination of several performance metrics, all optimal solutions for all possible linear combinations of objectives must lie on the boundary of their mutual convex hull (see \citet{boyd2004convex}, Example 2.27).
 % If a solution for a particular linear combination does not lie on this boundary, then another solution 
 % every optimal solution must lie on the boundary of the convex hull of the optimal solutions for all other linear combinations of metrics.
-% \txodo{Do I need to justify this more thoroughly?}
+% For optimization problems where the objective is a linear combination of performance metrics such as this problem or any that takes the form of (\ref{eq:scalarized}), 
+The Pareto-optimal points generated by solving optimization problems of the form in (\ref{eq:scalarized}) must lie on the convex hull of the true Pareto front (see \citet{boyd2004convex}, Example 2.27).
+Thus, approximate Pareto fronts plotted by connecting particular solutions with straight lines as in \cref{fig:gaps,fig:075} should be convex.
 Particularly egregious violations of convexity can be found in the mean MPC curve in \cref{fig:000} and the normal behavior assumption curve in \cref{fig:075}, where there are ``kinks'' at the third point from the top ($\lambda=2$) that prevent these curves from even being monotonic.
 
 The lack of convexity may be due to some combination of the following reasons:%
 \begin{enumerate}
-    \item The performance objectives plotted in the graphs do not exactly match the stepwise reward function \ref{eqn:reward}. For example, the planner observes a larger penalty if there are multiple safety violations, but this is not reflected in the plots.
+    \item The performance objectives plotted in the graphs do not exactly match the stage-wise reward function (\ref{eqn:reward}). For example, the planner observes a larger penalty if there are multiple safety violations, but this is not reflected in the plots.
     \item The MCTS-DPW solution method is itself stochastic and has no guarantees of convergence in finite time.
-    \item The solvers are solving inaccurate approximations of the true POMDP problem (except, perhaps, for POMCPOW).
+    \item Even given infinite computing time, the solvers will converge to inaccurate approximations of the true POMDP solution (except, perhaps, for POMCPOW).
 \end{enumerate}
 
 One compelling explanation for the kinks mentioned above is that, as $\lambda$ is increased, since the planner is penalized more severely for unsafe actions, it plans a more conservative trajectory and stays on the road longer.
-The longer time on the road gives more chances for unsafe events to occur which are difficult for the planner to avoid because of its inaccurate model.
+The longer time on the road gives more chances for unsafe events to occur which are difficult for the planner to predict and avoid because of its inaccurate model.
 This explanation is corroborated by the results in \cref{fig:bpkm}.
 In both places where there were previously kinks, the number of hard brakes per kilometer decreases as $\lambda$ increases.
 
@@ -424,9 +426,9 @@ In both places where there were previously kinks, the number of hard brakes per 
 \end{figure}
 
 
-\subsubsection{Correlation comparison}
+\subsection{Correlation comparison}
 
-It is also interesting to consider the Affect that the correlation between model parameters has on the relative effectiveness of the control approaches.
+It is also interesting to consider the effect that the correlation between model parameters has on the relative effectiveness of the control approaches.
 \Cref{fig:000} shows that when there is no correlation, QMDP offers a significant advantage over mean MPC, and POMCPOW offers a further significant advantage over QMDP.
 In this case, since the parameters are uncorrelated, there is a large amount of uncertainty in them even when some (e.g. $\dot{x}_0$) are easy to observe, and since POMCPOW is able to plan into the future considering this uncertainty, it performs better.
 On the other hand, when the parameters are fully correlated as shown in \cref{fig:100}, all of the parameters are easy to estimate by observing only a few, so there is not a significant performance gap between mean MPC, QMDP, and POMCPOW; all are able to close the gap and achieve nearly the same performance as the upper bound.
@@ -442,11 +444,50 @@ If there is little correlation, planning with internal states offers a less pron
     \centering
     % \includestandalone[mode=buildnew,width=0.5\textwidth]{media/corplot}
     \input{media/corplot.tex}
-    \caption[Performance variation with $\Theta$ correlation]{Performance variation with $\Theta$ correlation. Success is defined as reaching the target lane within the distance limit without any unsafe actions. Error bars indicate the \SI{68}{\percent} (corresponding to one standard deviation in a normal distribution) confidence region determined by the Hoeffding Bound. The Naive MDP performance is not shown because it is significantly lower than the other approaches.}
+    \caption[Performance variation with $\Theta$ correlation]{Performance variation with $\Theta$ correlation. Error bars indicate the \SI{68}{\percent} (corresponding to one standard deviation in a normal distribution) confidence region determined by the Hoeffding Bound. The Naive MDP performance is not shown because it is significantly lower than the other approaches.}
     \label{fig:corplot}
 \end{figure}
 
-\todo{add robustness study}
+\subsection{Robustness}
+
+In the experiments above, internal parameter distribution is assumed to be known exactly.
+Because there will be differences between any model used in planning and the way human drivers actually behave, it is important to test planning algorithms for robustness.
+This section contains tests in which the parameter distribution for planning differs from the true distribution.
+
+\subsubsection{Parameter Correlation Robustness}
+
+The first robustness test examines the effect of correlation inaccuracy.
+POMCPOW and QMDP planners that assume no correlation and full correlation are tested against simulation models with varying levels of correlation.
+\Cref{fig:corrob} shows the results.
+Performance does not degrade abruptly when the correlation model is inaccurate, though there is an advantage to planning with a correlated model when the true parameters are fully correlated.
+
+\begin{figure}[htpb]
+    \centering
+    \input{media/corrob.tex}
+    \caption[Parameter correlation robustness study]{Parameter correlation robustness study. Error bars indicate the \SI{68}{\percent} confidence region determined by the Hoeffding Bound.}
+    \label{fig:corrob}
+\end{figure}
+
+\subsubsection{Parameter Domain Robustness}
+
+In the second robustness test, the domain from which the parameters are drawn is expanded by a variable factor.
+Specifically, in the new test distribution, the ``Normal'' values from \cref{tab:params} are still used as the midpoints of the distribution, but the distance to the extremes is multiplied by the expansion factor. 
+For example, if the expansion factor is \num{2}, the marginal distribution of the desired time gap, $T$, is uniform between \SI{0.5}{\second} and \SI{2.5}{\second}.
+Distributions that contain physically nonsensical values such as a negative jam distance, $g_0$, are truncated. 
+The planner always uses the distribution defined by values from \cref{tab:params}.
+
+\Cref{fig:domrob} shows the results of tests with expansion factor values between \num{0.2} and \num{2.0}.
+All approaches have significantly more success when the expansion factor is less than \num{1}, indicating that the problem is easier in this case, even with an inaccurate model.
+There is significant performance degradation at higher expansion factors, both in absolute terms and relative to the omniscient upper bound.
+However, this degradation is one-sided; there is little performance lost due to planning with distribution domains that are larger than the true distribution domain.
+This one-sidedness suggests that, in practice, prior distributions should be chosen conservatively (i.e. with a larger domain than that of the true distribution) so that the planner can handle situations with both higher- and lower-than-expected levels of uncertainty. 
+
+\begin{figure}[htpb]
+    \centering
+    \input{media/domrob.tex}
+    \caption[Parameter domain robustness study]{Parameter domain robustness study. Error bars indicate the \SI{68}{\percent} confidence region determined by the Hoeffding Bound.}
+    \label{fig:domrob}
+\end{figure}
 
 \section{Discussion}
 
@@ -456,7 +497,7 @@ Both MDP solutions that ignore the internal states of other drivers, and POMDP s
 An upper performance bound is established by planning with full knowledge of the internal states.
 In order to remain agnostic with regard to the relative importance of safety and efficiency, Pareto frontiers are compared.
 
-POMDP approaches are compared to both conservative MDP formulations that model internal state uncertanty as outcome uncertainty and overly confident MDP approaches where knowledge of the internal state is assumed
+POMDP approaches are compared to both a conservative MDP formulation that models internal state uncertainty as outcome uncertainty and an overly confident MDP approach where knowledge of the internal state is assumed
 The advantage of the POMDP approaches is clear in all of the tests.
 However, the relative effectiveness of different POMDP approaches is heavily dependent on the correlation of the distributions of the internal states.
 If the internal states are highly correlated, simply estimating them with a particle filter and planning assuming certainty equivalence is adequate to nearly match the upper performance bound.
@@ -464,10 +505,14 @@ On the other hand, when the parameters are uncorrelated, the QMDP planner perfor
 Moreover, in this uncorrelated case, there is a significant gap between all approaches and the upper bound.
 Partial correlation results in the expected results between the correlated and uncorrelated cases.
 
+Experiments also characterize the robustness of the algorithms to incorrect parameter distributions.
+POMCPOW and QMDP do not suffer significant performance degradation when the parameter correlation is not correct.
+Robustness to inaccuracy in the parameter domain is one-sided: when the true domain is larger than that assumed by the planners, performance is adversely affected, but when the true domain is smaller, there is no degradation.
+
 The primary weakness of this investigation is the model for other drivers.
 Since the IDM and MOBIL models were developed to simulate large scale traffic flow~\cite{treiber2000idm,kesting2007mobil}, their accuracy for microscopic simulations has not been attested with data.
 Upgrading to models learned from data would further validate the conclusions drawn here.
-Other similar research (e.g.~\cite{schmerling2018multimodal}) has taken steps in this direction by using a conditional variational auto-encoder model.
+Other similar research has taken steps in this direction by using a conditional variational auto-encoder model~\cite{schmerling2018multimodal}.
 The model used here also neglects one of the key internal states of drivers: intentions.
 Planning based on the possible intentions of other drivers would likely be an even more powerful planning technique than the approach investigated here because it would enable sophisticated interaction and communication between the autonomous cars and humans.
 

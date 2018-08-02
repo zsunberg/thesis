@@ -12,7 +12,7 @@
 % engineer - does an engineer thesis instead of a PhD dissertation
 
 %% load other packages you need
-% \usepackage{hyperref}
+\usepackage[hidelinks]{hyperref}
 \usepackage{amsmath}
 \usepackage{amsfonts}
 \usepackage{amssymb}
@@ -33,10 +33,26 @@
 \usepackage{standalone}
 \usepackage{pgfplots}
 \usepackage{listings}
+\usepackage{float}
 
 \pgfplotsset{every axis/.append style={font=\footnotesize,legend cell align=left}}
 
-\usepackage[natbib=true]{biblatex}
+\usepackage[natbib,
+            bibstyle=ieee,
+            maxnames=6,
+            sorting=nyt,
+            doi=false,
+            backref=true
+           ]{biblatex}
+
+\AtEveryBibitem{
+	\ifentrytype{inproceedings}{
+		\clearfield{url}  
+		\clearfield{doi}  
+	}{}
+}
+
+
 \addbibresource{ref.bib}
 \addbibresource{behavior_ref.bib}
 \addbibresource{asl_main.bib}
@@ -143,13 +159,13 @@
     stringstyle      = \color{magenta},
     commentstyle     = \bfseries\color{OliveGreen},
     showstringspaces = false,
-    gobble=1,
+    gobble=0,
 }
 
 \lstdefinestyle{customjulia}{
   belowcaptionskip=1\baselineskip,
   breaklines=true,
-  frame=L,
+  % frame=L,
   xleftmargin=\parindent,
   language=Julia,
   showstringspaces=false,
@@ -168,7 +184,9 @@
   commentstyle=\itshape\color{purple!40!black},
 }
 
-
+\newfloat{lstfloat}{htbp}{lop}
+\floatname{lstfloat}{Listing}
+\def\lstfloatautorefname{Listing} % needed for hyperref/auroref
 
 \title{Safety and Efficiency in Autonomous Vehicles through Planning with Uncertainty}
 \author{Zachary Nolan Sunberg}
@@ -181,7 +199,7 @@
 
 %the following command would (if uncommented) allow  only chapter1 and
 %chapter2 to be processed
-% \includeonly{pomcpow}
+%\includeonly{multilane}
 
 % if you feel real savvy use
 % \typein{Now put in includeonly}
@@ -207,12 +225,12 @@ Moreover, the presence of uncertainty about the environment makes planning safe 
 
 The Markov decision process (MDP) is a systematic framework for modelling sequential decision problems with outcome uncertainty, and the partially observable Markov decision process (POMDP) adds the additional ability to model state uncertainty.
 MDPs and POMDPs are suitable models for a wide range of situations that an autonomous vehicle might face.
-However, obtaining the exact solution to a general POMDP is an intractable problem. % TODO Why
+However, obtaining the exact solution to a general POMDP is an intractable problem.
 This thesis considers approximate MDP and POMDP solutions and seeks to quantify their utility for autonomous vehicles.
 Specifically, it contains four contributions.
 
-The first application chapter analyzes the use of a certifiable safety constraint alongside approximate optimization in the context of unmanned aerial vehicle (UAV) collision avoidance.
-UAV collision avoidance is challenging in particular because small unmanned vehicles often do not have the performance capability or legal permission to perform conventional altitude-based conflict resolution maneuvers, so they must perform more complex horizontal conflict resolution.
+First, the thesis analyzes the use of a certifiable safety constraint alongside approximate optimization in the context of unmanned aerial vehicle (UAV) collision avoidance.
+% UAV collision avoidance is challenging in particular because small unmanned vehicles often do not have the performance capability or legal permission to perform conventional altitude-based conflict resolution maneuvers, so they must perform more complex horizontal conflict resolution.
 In order to ensure safety, aerospace systems have particularly stringent certification requirements that likely preclude approximate randomized planning techniques capable of handling uncertainty.
 This work evaluates the performance price that comes with using a simple certified policy and shows that MDP and POMDP optimization can significantly reduce that price and improve both safety and efficiency simultaneously.
 
@@ -224,14 +242,13 @@ Moreover, the thesis describes an experimental method for investigating other ca
 
 The benefits of POMDP planning can only be realized with algorithms that can handle real-world domains that are continuous and irregular.
 To that end, the third contribution of the thesis is a pair of new algorithms for solving POMDPs with continuous state, action, and observation spaces.
-These algorithms are motivated by analysis and numerical experiments that show that leading online POMDP solvers cannot handle continuous observation spaces.
-Previous solvers exhibit suboptimal behavior, a failure that is due to two problems.
+These algorithms are motivated by analysis and numerical experiments that show that leading online POMDP solvers fail on continuous observation spaces because of the following two problems.
 First, the large observation space causes policy trees to become too wide and not deep enough.
 Second, the number of state particles used to represent beliefs collapses to one, causing overconfidence.
 The new algorithms, POMCPOW and PFT-DPW, handle these problems using progressive widening and weighted particle belief representations.
 Numerical experiments show that they are able to solve problems where previous methods fail.
 
-The final contribution is a software package, POMDPs.jl, which uses the features of the Julia programming language to bring state-of-the-art POMDP solution methods to bear on problems that they define with a convenient and flexible high-level interface.
+The final contribution is a software package, POMDPs.jl, which uses the features of the Julia programming language to bring state-of-the-art POMDP solution methods to bear on problems defined through an interface that provides convenience and flexibility.
 
 % A great deal of future work remains, including further mathematical analysis of the algorithms and testing with more realistic models of human behavior. But the contributions of this thesis to understanding the affects of uncertainty modeling and developing algorithms that apply to realistic problems are two vital steps on the path to safe and efficient autonomy.
 

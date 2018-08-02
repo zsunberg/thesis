@@ -1,18 +1,12 @@
 \chapter{Trusted and Optimized UAV Collision Avoidance} \label{chap:uav}
 
-This thesis's first investigation into safety and efficiency is in the context of unmanned aerial vehicles.
+This thesis's first investigation into safety and efficiency is in the context of unmanned aerial vehicles (UAVs).
 Collision avoidance is an important challenge that must be overcome to make UAV operation routine and safe.
-In this chapter, the suitability of the collision avoidance system for easy certification is the primary safety focus.
+In this chapter,  the suitability of the collision avoidance system for easy certification is the primary safety focus.
 The challenge is to create a system that is both easy to certify and has minimal impact on efficient normal operations.
 
-\section{Collision Avoidance for Unmanned Aerial Vehicles} \label{sec:uavintro}
 
-\begin{figure}
-    \centering
-    \includegraphics[height=5.0cm]{media/simple_trl.pdf}
-    \caption[Trusted resolution logic]{Trusted resolution logic. The near mid air collision exclusion zone (circle with radius $D$) moves with the intruder through time, but is shown here only at the time of closest approach. The TRL (\Cref{alg:trl}) finds a straight trajectory close to the nominal path that avoids this zone.}
-    \label{fig:trl}
-\end{figure}
+\section{Collision Avoidance for UAVs} \label{sec:uavintro}
 
 As unmanned aerial vehicles (UAVs) move toward full autonomy, it is vital that they be capable of effectively responding to anomalous events, such as the intrusion of another aircraft into the vehicle's flight path. Minimizing collision risk for aircraft in general, and UAVs in particular, is challenging for a number of reasons. First, avoiding collision requires planning in a way that accounts for the large degree of uncertainty in the future paths of the aircraft. Second, the planning process must balance the competing goals of ensuring safety and avoiding disruption of normal operations. Many approaches have been proposed to address these challenges \cite{JKK-LCY:00,HYO-MJK:15,RB-CF-HE:09,GH-RB-JM:11,HH-JJ-CM:10,AN-CM-GD:12,ST-MJK-LPK-TLP-JKK:10,MJK-JPC:11,MJK-JPC-LPK-TL:10,LPK-TL:09,HB-DH-MJK-WSL:12,JEH-MJK-WAO:13,EJR:14}.
 
@@ -20,7 +14,7 @@ At present, there are two fundamentally different approaches to designing a conf
 This is accomplished by constructing the algorithm using hand-specified rules.
 Several algorithms that fit this paradigm have been proposed, and research toward formally verifying their safety-critical properties is underway \cite{RB-CF-HE:09,GH-RB-JM:11,HH-JJ-CM:10,AN-CM-GD:12}.  In this chapter, such algorithms are referred to as \emph{trusted resolution logic} (TRL).
 Many TRL systems have a number of parameters that determine how conservatively the system behaves.
-These parameters may be tuned to meet specific performance goals, but their exact affects on performance can typically only be characterized empirically.
+These parameters may be tuned to meet specific performance goals, but their exact effects on performance can typically only be characterized empirically.
 
 The second approach focuses on optimizing performance.
 This entails the offline or online  computation of a ``best" response action. Dynamic programming is widely used for this task \cite{ST-MJK-LPK-TLP-JKK:10,MJK-JPC:11,MJK-JPC-LPK-TL:10,LPK-TL:09,HB-DH-MJK-WSL:12,JEH-MJK-WAO:13}. 
@@ -33,22 +27,29 @@ In both strategies, dynamic programming is used to find near-optimal actions for
 The difference lies in the set of actions available to the optimizer.
 In the \emph{optimized TRL} approach, the actions are a set of certified TRL parameters.
 In the \emph{trusted direct optimization} approach, the actions are a state-dependent set of immediate response actions that are deemed safe by certified TRL.
-Both strategies may achieve better performance than the base TRL with a similar relative ease of certification compared to plain direct optimization.
+Both strategies may achieve better performance than the base TRL without becoming significantly more difficult to certify.
 
-We test the new approaches in a scenario containing a UAV equipped with a perfect (noiseless) sensor to detect the state of an intruder and a simple reference TRL to resolve conflicts. This TRL, illustrated in \Cref{fig:trl}, determines a path that does not pass within a specified separation distance, $D$, of the intruder given that the intruder maintains its current heading (except in cases where no such path exists or when the TRL's heading resolution is too coarse to find such a path).
+\begin{figure}
+    \centering
+    \includegraphics[height=5.0cm]{media/simple_trl.pdf}
+    \caption[Trusted resolution logic]{Trusted resolution logic. The near mid air collision exclusion zone (circle with radius $D$) moves with the intruder through time, but is shown here only at the time of closest approach. The TRL (\Cref{alg:trl}) finds a straight trajectory close to the nominal path that avoids this zone.}
+    \label{fig:trl}
+\end{figure}
+
+The new approaches are tested in a scenario containing a UAV equipped with a perfect (noiseless) sensor to detect the state of an intruder and a simple reference TRL to resolve conflicts. This TRL, illustrated in \Cref{fig:trl}, determines a path that does not pass within a specified separation distance, $D$, of the intruder given that the intruder maintains its current heading (except in cases where no such path exists or when the TRL's heading resolution is too coarse to find such a path).
 This reference TRL is described in more detail in \Cref{sec:trl}.
 
-To account for uncertainty in the intruder's flight path, if $D$ takes a constant value, say $\bar{D}$, the value must be very large to ensure safety, but this may cause unnecessary departures from normal operation.
-To overcome this limitation and ensure safety without being too conservative, implementations of the two strategies outlined above are applied.
-The optimized TRL approach computes a policy, $\trl{\pi}$, that specifies a time varying separation distance, $D_t$, for each encounter state, while the direct optimization and trusted direct optimization approaches compute policies, $\diro{\pi}$ and $\tdo{\pi}$, that specifies a bank angle, $\phi_t$ for each encounter state.
-For this reason, symbols referring to the optimized TRL approach generally have subscript $D$, while those referring to direct optimization trusted direct optimization have a subscript $\phi$.
+To account for uncertainty in the intruder's flight path, if $D$ takes a constant value, say $\bar{D}$, the value must be increased to ensure safety, but this may cause unnecessary departures from normal operation.
+To overcome this limitation and ensure safety without being too conservative, implementations of the two strategies mentioned above are applied.
+The optimized TRL approach computes a policy, $\trl{\pi}$, that specifies a time varying separation distance, $D_t$, for each encounter state, while the direct optimization and trusted direct optimization approaches compute policies, $\diro{\pi}$ and $\tdo{\pi}$, that specify a bank angle, $\phi_t$ for each encounter state.
+For this reason, symbols referring to the optimized TRL approach generally have subscript $D$, while those referring to direct optimization and trusted direct optimization have a subscript $\phi$.
 
-The problem of dynamically selecting actions $D_t$ or $\phi_t$ can be formulated as a Markov decision process (MDP). Online solution of $\trl{\pi}$, $\diro{\pi}$, or $\tdo{\pi}$ using an algorithm such as Monte Carlo Tree Search (MCTS) \cite{AC-JH-NS-OT-NB:11} would be conceptually straightforward, but would require significant computing power onboard the vehicle, and it would be difficult and time-consuming to rigorously certify the implementation of MCTS due to its reliance on pseudo-random number generation. A key contribution of this chapter is to devise an \emph{offline} approach to compute the policies. Offline optimization is difficult because of the size of the state space of the MDP, which is the Cartesian product of the continuous state spaces of the UAV and the intruder. This challenge is overcome with a value function approximation scheme that uses grid-based features that exploit the structure of the state space. This value function is optimized using simulation-based approxima
+The problem of dynamically selecting actions $D_t$ or $\phi_t$ can be formulated as a Markov decision process (MDP). Online solution of $\trl{\pi}$, $\diro{\pi}$, or $\tdo{\pi}$ using an algorithm such as Monte Carlo Tree Search (MCTS) \cite{couetoux2011double} would be conceptually straightforward, but would require significant computing power onboard the vehicle, and it would be difficult and time-consuming to rigorously certify the implementation of MCTS due to its reliance on pseudo-random number generation. A key contribution of this chapter is to devise an offline approach to compute the policies. Offline optimization is difficult because of the size of the state space of the MDP, which is the Cartesian product of the continuous state spaces of the UAV and the intruder. This challenge is overcome with a value function approximation scheme that uses grid-based features that exploit the structure of the state space. This value function is optimized using simulation-based approximate value iteration.
 
 
 \section{MDP Models}\label{sec:uavmodel}
 
-The problem of avoiding an intruder using one of the strategies above is formulated as an MDP, referred to as an \emph{encounter} MDP. An encounter involves two aerial vehicles flying in proximity. The first is the vehicle for which the resolution controller is being designed, which will be referred as the ``own UAV" (or simply ``UAV''). The second is the intruder vehicle, which may be manned or unmanned and will be referred to as the ``intruder". Specifically, the encounter MDP is defined by the tuple $(\sspace, \aspace, \tdist, R)$, which consists of
+The problem of avoiding an intruder using one of the strategies above is formulated as an MDP, referred to as an \emph{encounter MDP}. An encounter involves two aerial vehicles flying in proximity. The first is the vehicle for which the resolution controller is being designed, which will be referred as the ``own UAV" (or simply ``UAV''). The second is the intruder vehicle, which may be manned or unmanned and will be referred to as the ``intruder". Specifically, the encounter MDP is defined by the tuple $(\sspace, \aspace, \tdist, R)$, which consists of
 
 \begin{itemize}
     \item The state space, $S$: The state of the encounter, $s$, consists of (1) the state of the own UAV, $\rs$, (2) the state of the intruder, $\is$, and (3) a boolean variable $\dev$. The variable $\dev$ is set to true if the UAV has deviated  from its nominal course. Collectively, the state is given by the triple
@@ -69,7 +70,7 @@ Two important simplifying assumptions were made for this initial study. First, t
 A higher fidelity model would present a computational challenge, but perhaps not an insurmountable one.
 For example, the TRL could be extended to handle variable speed and altitude, but the policy could be optimized only on the most important dimensions of the model (e.g., the horizontal plane). See~\cite{MJK-JPC-PPR:10} for a similar successful example.
 
-Second, the intruder dynamics are \emph{independent} of the UAV's state; in other words, the intruder does not react to the flight path of the UAV. The cooperative setting where both the UAV and the intruder are equipped with a collision avoidance system (CAS) \cite{EJR:14,CT-GJP-SSS:98,MJK-JPC:11} is left for future research.
+Second, the intruder dynamics are independent of the UAV's state; in other words, the intruder does not react to the flight path of the UAV. The cooperative setting where both the UAV and the intruder are equipped with a collision avoidance system (CAS) \cite{EJR:14,CT-GJP-SSS:98,MJK-JPC:11} is left for future research.
 
 \subsection{Vehicle States and Dynamics}\label{sec:veh}
 
@@ -95,7 +96,7 @@ The intruder makes small random turns with
 \begin{equation}
     \intr{\dot{\psi}} = w_t \text{,}
 \end{equation}
-where $w_t$ is a stochastic disturbance. We let $W$ denote the stochastic process $\{w_t: t\in \naturals\}$. The random variables $w_t$ in $W$ are assumed independent and identically normally distributed with zero mean and a specified standard deviation, $\sigma_{\dot{\psi}}$. Subsequently, the intruder dynamics will be collectively referred to as $\intr{f}$, and
+where $w_t$ is a stochastic disturbance. We let $W$ denote the stochastic process $\{w_t: t\in \naturals\}$. The random variables $w_t$ in $W$ are assumed independent and identically normally distributed with zero mean and a specified standard deviation, $\sigma_{\dot{\psi}}$. Subsequently, the intruder dynamics will be collectively referred to as $\intr{f}$ so that
 \begin{equation} \label{eq:idyn}
     \intr{s_{t+1}} = \intr{f}\left(\intr{s}_t, w_t\right) \text{.}
 \end{equation}
@@ -166,11 +167,9 @@ In this case, $\psicand$ should be understood to be the UAV heading angle corres
 
 \subsubsection{Discrete Heading Optimization}
 
-The TRL begins with a discrete set of potential heading values (each denoted $\psicand$) for the UAV. It then determines, for a desired separation distance $D$,  which of those will not result in a collision given that the UAV and  intruder maintain their headings. Finally, it selects the value from that set which is closest to $\psigoal$. The TRL is outlined in \cref{alg:trl}.
-
 \renewcommand{\algorithmicrequire}{\textbf{Input:}}
 \renewcommand{\algorithmicensure}{\textbf{Output:}}
-\begin{algorithm}[tb]
+\begin{algorithm}[tbhp]
     \caption{Trusted Resolution Logic}\label{alg:trl}
 \begin{algorithmic}
     \Require Encounter state $s$, desired separation distance $D$
@@ -190,6 +189,7 @@ The TRL begins with a discrete set of potential heading values (each denoted $\p
 \end{algorithmic}
 \end{algorithm}
 
+The TRL begins with a discrete set of potential heading values (each denoted $\psicand$) for the UAV. It then determines, for a desired separation distance $D$,  which of those will not result in a collision given that the UAV and  intruder maintain their headings. Finally, it selects the value from that set which is closest to $\psigoal$. The TRL is outlined in \cref{alg:trl}.
 
 \subsection{Action Spaces and Control Systems}\label{sec:aspaces}
 
@@ -216,7 +216,7 @@ We write this as
 where $c(\cdot)$ represents the low level controller.
 When the action is a separation distance, the transition function, $F$, should be understood to contain the TRL and low level control system, that is
 \begin{equation}
-    F(s_t, D_t, w_t) := F(s_t, c(\own{s}_t, \text{TRL}(s_t, D_t), w_t) \text{.}
+    F(s_t, D_t, w_t) := F(s_t, c(\own{s}_t, \text{TRL}(s_t, D_t)), w_t) \text{.}
 \end{equation}
 
 \subsection{Reward}\label{sec:rew}
@@ -241,7 +241,7 @@ The problem we consider  is to find a feedback control policy $\pi^*: S \to A$, 
 \begin{equation}\label{eq:prob}
 \begin{aligned}
 & \underset{\pi}{\text{maximize}}
-& & E \left[\sum_{t=0}^\infty R(s_t, \pi(s_t))\right] \\
+& & E \left[\sum_{t=0}^\infty \reward(s_t, \pi(s_t))\right] \\
 & \text{subject to}
 & & s_{t+1} = F(s_t, \pi(s_t), w_t) \text{,}
 \end{aligned}
@@ -268,15 +268,15 @@ where the feature function $\beta$ returns a vector of $N_\beta$ feature values,
 
 \subsection{Approximate Value Iteration} \label{sec:iter}
 
-The bulk of the computation is carried out offline before vehicle deployment using simulation. Specifically, the first step is to estimate the optimal value function for problem \eqref{eq:prob} using value iteration \cite{DB:05}. On a continuous state space such as the encounter state space used in this work, the Bellman operator used in value iteration cannot be applied for each of the uncountably infinite number of states, so an approximation must be used. In this paper we adopt projected value iteration \cite{DB:05}, which  uses a finite number of parameters to approximate the value function. Each successive approximation, $\tilde{V}_k$, is the result of the Bellman operation projected onto a linear subspace with respect to the Euclidean norm, that is
+The bulk of the computation is carried out offline before vehicle deployment using simulation. Specifically, the first step is to estimate the optimal value function for problem \eqref{eq:prob} using value iteration \cite{DB:05}. On a continuous state space such as the encounter state space used in this work, the Bellman operator used in value iteration cannot be applied for each of the uncountably infinite number of states, so an approximation must be used. In this paper we adopt projected value iteration \cite{DB:05}. Each successive approximation, $\tilde{V}_k$, is the result of the Bellman operation projected onto a linear subspace with respect to the Euclidean norm, that is
 \begin{equation}\label{eqn:projvi}
     \tilde{V}_{k+1}(s) = \Pi \mathcal{B}[\tilde{V}_k](s) \text{,}
 \end{equation}
 where $\mathcal{B}$ is the Bellman operator, and $\Pi$ is a projection onto the linear subspace $\Phi$ spanned by the $N_\beta$ basis functions (see \cite{DB:05} for a detailed discussion of this approach).
 
-To perform the approximate value iteration \eqref{eqn:projvi}, we resort to Monte Carlo simulations. Specifically, for each iteration, $N_\text{state}$ states are uniformly randomly selected. If the states lie within the grids used in the feature function (see \Cref{sec:features}) the sample is ``snapped'' to the nearest grid point to prevent approximation errors due to the Gibbs phenomenon \cite{JF-FBR:91}. At each sampled state $s^{[n]}$, $n=1,\ldots, N_\text{state}$, the stage-wise reward and the expected value of the value function are evaluated for each action $a$ in $\tilde{\aspace}$. The expectation embedded in the Bellman operator is approximated using $N_{\text{EV}}$ \emph{single-step} intruder simulations, each with a randomly generated noise value, $w_m$, $m=1,\ldots, N_{\text{EV}}$. However, since the own UAV dynamics are deterministic, only one own UAV simulation is needed. The maximum over $\tilde{A}$ is selected and stored as the $n$th entry of a vector $v_{k+1}$:
+Monte Carlo simulations are used to perform the approximate value iteration \eqref{eqn:projvi}. Specifically, for each iteration, $N_\text{state}$ states are uniformly randomly selected. If the states lie within the grids used in the feature function (see \Cref{sec:features}) the sample is ``snapped'' to the nearest grid point to prevent approximation errors due to the Gibbs phenomenon \cite{JF-FBR:91}. At each sampled state $s^{[n]}$, $n=1,\ldots, N_\text{state}$, the stage-wise reward and the expected value of the value function are evaluated for each action $a$ in $\tilde{\aspace}$. The expectation embedded in the Bellman operator is approximated using $N_{\text{EV}}$ \emph{single-step} intruder simulations, each with a randomly generated noise value, $w_m$, $m=1,\ldots, N_{\text{EV}}$. However, since the own UAV dynamics are deterministic, only one own UAV simulation is needed. The maximum over $\tilde{A}$ is selected and stored as the $n$th entry of a vector $v_{k+1}$:
 \begin{equation}
-    v_{k+1}[n] := \max_{a \in \tilde{A}} \left\{R(s^{[n]},a) + \frac{1}{N_{\text{EV}}}\sum_{m=1}^{N_{\text{EV}}} \beta(F(s^{[n]}, a, w_m))^\top \theta_k \right\} \text{,}
+    v_{k+1}[n] := \max_{a \in \tilde{A}} \left\{\reward(s^{[n]},a) + \frac{1}{N_{\text{EV}}}\sum_{m=1}^{N_{\text{EV}}} \beta(F(s^{[n]}, a, w_m))^\top \theta_k \right\} \text{,}
 \end{equation}
 for $n=1,\ldots, N_\text{state}$. Here $v_{k+1}$ provides an approximation to the (unprojected) value function. To project $v_{k+1}$ onto $\Phi$, we compute the weight vector $\theta_{k+1}$ by solving the least-squares optimization problem
 \begin{equation}
@@ -286,7 +286,7 @@ Iteration is terminated after a fixed number of steps, $N_{VI}$, and the resulti
 
 \subsection{Post Decision Value Function Extraction} \label{sec:extract}
 
-For reasons discussed in \Cref{sec:policy}, our second step is to approximate a value function defined over post-decision states \cite{DB:05}. A post-decision state, denoted by $q$, is defined as a state in $S$ consisting of the own UAV state and $\dev$ \emph{at one time step into the future} and the intruder state \emph{at the current time}, that is
+For reasons discussed in \Cref{sec:policy}, the second step is to approximate a value function defined over post-decision states \cite{DB:05}. A post-decision state, denoted by $q$, is defined as a state in $S$ consisting of the own UAV state and $\dev$ \emph{at one time step into the future} and the intruder state \emph{at the current time}, that is
 \begin{equation} \label{eqn:pd}
     q_t = \left(\rs_{t+1}, \is_t, \dev_{t+1}\right) \text{.}
 \end{equation}
@@ -339,15 +339,17 @@ The first two steps (explained, respectively, in Sections \ref{sec:iter} and \re
 Since $g$ (defined in \eqref{eqn:g}) is a \emph{deterministic} function of a state-action pair, this calculation does not contain any computationally costly or difficult-to-certify operations such as estimating an expectation.
 
 Two comments regarding the motivation for using the post-decision value function are in order. First, 
-if the value functions could be exactly calculated, the post-decision state approach would be equivalent to the more common $Q$-factor-based approach, wherein a  control is computed by solving
+if the value functions could be exactly calculated, the post-decision state approach would be equivalent to the more common approach wherein a control is computed by solving
 \begin{equation}
     \pi(s) = \underset{a \in \tilde{A}}{\argmax} \, Q(s,a) \text{,}
 \end{equation}
-and $Q(s,a)$ (the $Q$-factor) represents the expected value of taking action $a$ in state $s$ and then following an optimal policy \cite{DB:05}. In fact, one can readily show $Q(s,a) = V_q\left( g(s,a) \right)$. However, when approximations are used, post-decision states provide a more robust (i.e., less susceptible to approximation error) way of deriving control actions \cite{DB:05}. One reason for this is that the cost function is approximated in the space of post-decision states, rather than in the larger space of state-control pairs, and hence the post-decision method is less susceptible to complications with inadequate exploration \cite{DB:05}. Second, the post decision value function is not used for the value iteration portion of the offline solution as it would require full simulations of both the own UAV and the intruder dynamics and, therefore, would be more computationally demanding.
+In fact, one can readily show $Q(s,a) = V_q\left( g(s,a) \right)$. However, when approximations are used, post-decision states provide a more robust (i.e., less susceptible to approximation error) way of deriving control actions \cite{DB:05}. One reason for this is that the cost function is approximated in the space of post-decision states, rather than in the larger space of state-control pairs, and hence the post-decision method is less susceptible to complications with inadequate exploration \cite{DB:05}.
+
+Second, the post decision value function is not used for the value iteration portion of the offline solution as it would require full simulations of both the own UAV and the intruder dynamics and, therefore, would be more computationally demanding.
 
 \subsection{Selection of Features} \label{sec:features}
 
-The primary value function approximation features are the interpolation weights for points in a grid \cite{SD:97}. A grid-based approximation is potentially inefficient compared to a small number of global features (e.g. heading, distance, and trigonometric functions of the variables), however, it is well known that the function approximation used in value iteration, must have suitable convergence properties~\cite{JAB-AWM:95} in addition to approximating the final value function. Indeed, we experimented with a small number of global features, but were unable to achieve convergence and resorted to using a grid. Since a grid defined over the entire six dimensional encounter state space with a reasonable resolution would require far too many points to be computationally feasible, the grid must be focused on important parts of the state space.
+The primary value function approximation features are the interpolation weights for points in a grid \cite{SD:97}. A grid-based approximation is potentially inefficient compared to a small number of global features (e.g. heading, distance, and trigonometric functions of the variables), however, it is well known that the function approximation used in value iteration, must have suitable convergence properties~\cite{JAB-AWM:95} in addition to approximating the final value function. Indeed, experiments with a small number of global features were attempted, but they did not achieve convergence, and a grid approach was adopted instead. Since a grid defined over the entire six dimensional encounter state space with a reasonable resolution would require far too many points to be computationally feasible, the grid must be focused on important parts of the state space.
 
 Our strategy is to separate features into two groups (along with a constant), specifically
 \begin{equation}
@@ -359,7 +361,7 @@ The first group, $\beta_\text{intruder}$, captures the features corresponding to
     \centering
     \begin{subfigure}[t]{0.48\textwidth}
         \includegraphics[width=\textwidth]{media/intruder_grid_plus.pdf}
-        \caption[Intruder interpolation grid]{Intruder interpolation grid for $\beta_\text{intruder}$, visualized when the intruder is located at (\SI{700}{m}, \SI{-250}{m}) at heading \num{135}. The top left inset shows the variables used. In the main plot, each of the small arrows represents a grid point. At each of the point locations, there are twelve small arrows radiating out. Each arrow represents a different own UAV heading.}
+        \caption[Intruder interpolation grid]{Intruder interpolation grid for $\beta_\text{intruder}$, visualized when the intruder is located at (\SI{700}{m}, \SI{-250}{m}) at heading \num{135}. The top left inset shows the variables used. In the main plot, each of the small arrows represents a grid point. At each of the point locations, there are twelve small arrows radiating out. Each arrow represents a different UAV heading.}
         \label{fig:intrudergrid}
     \end{subfigure}
     \hfill
@@ -378,11 +380,11 @@ with nodes regularly spaced along the distance between the UAV and the goal and 
 
 \section{Results} \label{sec:results}
 
-This section presents results from numerical experiments that illustrate the effectiveness of our approach. The experiments are designed to compare the four approaches discussed in \cref{sec:uavintro}: the ``static TRL'' approach, ``direct optimization'', and the new ``optimized TRL'' and ``trusted direct optimization'' approaches proposed in this chapter. The static TRL law uses the TRL described in \cref{alg:trl} with a constant value for the separation distance (denoted with $\bar{D}$), while the other approaches use the approximate optimization procedure described in \cref{sec:approach}. The various parameters used in the numerical experiments are listed in \cref{tab:uparams}.
+This section presents results from numerical experiments that illustrate the effectiveness of the new approach. The experiments are designed to compare the four approaches discussed in \cref{sec:uavintro}: the ``static TRL'' approach, ``direct optimization'', and the new ``optimized TRL'' and ``trusted direct optimization'' approaches proposed in this chapter. The static TRL law uses the TRL described in \cref{alg:trl} with a constant value for the separation distance (denoted with $\bar{D}$), while the other approaches use the approximate optimization procedure described in \cref{sec:approach}. The various parameters used in the numerical experiments are listed in \cref{tab:uparams}.
 
 \subsection{Policies}
 
-This section includes visualizations of two-dimensional ``slices'' of several UAV policies and their associated value functions. In each of the slices, the intruder is located at (\SI{700}{m},\SI{-250}{m}) pointed at heading 135 as indicated by the arrow. The goal is at (\SI{1000}{m},\num{0}). Each pixel on this image represents the value function or policy evaluated with the UAV at that position pointed directly north. As expected, for all approaches, there is a low value region in front of and to the south of the intruder and an increase in the value near the goal.
+This section includes visualizations of two-dimensional ``slices'' of several UAV policies and their associated value functions. In each of the slices, the intruder is located at (\SI{700}{m},\SI{-250}{m}) pointed at heading 135 as indicated by the arrow. The goal is at (\SI{1000}{m},\num{0}). Each pixel on this image represents the value function or policy evaluated with the UAV at that position pointed directly north. As expected, for all approaches, there is a low value region in front of and to the south of the intruder and a high value region near the goal.
 
 \Cref{fig:dovalue,fig:dopolicy} show the value function and policy for the directly optimized approach, and \cref{fig:tdovalue,fig:tdopolicy} show the same for the trusted directly optimized approach.
 The policies for both approaches are similar, with regions in front of the intruder where sharp turns are commanded.
@@ -478,7 +480,7 @@ The fraction of collisions avoided is estimated using a separate set of \num{100
 \begin{figure}[tb]
     \centering
     \includegraphics[width=\columnwidth]{media/pareto.pdf}
-    \caption[Policy performance comparison]{Policy performance comparison. The horizontal axis variable is the number of deviations in \num{10000} encounter simulations. The values of $\lambda$ used to generate the datapoints are \num{100}, \num{316}, \num{1000}, \num{3160}, \num{e4}, and \num{3.16e4} for the optimized TRL policy and \num{300}, \num{500}, \num{700}, \num{1000}, and \num{1500} for the directly optimized approach. The values of $\bar{D}$ for the static TRL policy are \SI{250}{m}, \SI{300}{m}, \SI{350}{m}, \SI{400}{m}, and \SI{500}{m}.}
+    \caption[Policy performance comparison]{Policy performance comparison. The values of $\lambda$ used to generate the datapoints are \num{100}, \num{316}, \num{1000}, \num{3160}, \num{e4}, and \num{3.16e4} for the optimized TRL policy and \num{300}, \num{500}, \num{700}, \num{1000}, and \num{1500} for the directly optimized approach. The values of $\bar{D}$ for the static TRL policy are \SI{250}{m}, \SI{300}{m}, \SI{350}{m}, \SI{400}{m}, and \SI{500}{m}.}
        \label{fig:pareto}
 \end{figure}
 
@@ -502,9 +504,9 @@ This general approach is widely used~\cite{kochenderfer2015decision}, though pro
 By choosing appropriate features and using a post-decision state, the method is made tractable for this problem.
 
 % Using simple trusted resolution logic, where the UAV simply chooses the closest heading to the goal direction that will never pass within a specified distance $D$ of the intruder maintaining its current heading is an alternate approach.
-Using simple trusted resolution logic that guarantees a separation distance $D$ if the intruder maintains it current heading is an alternate approach.
+Using simple trusted resolution logic that guarantees a separation distance $D$ if the intruder maintains its current heading is an alternate approach.
 This approach has the advantage that it can be easily certified because, by construction, it will never command a heading that is considered dangerous.
-However, when this TRL is compared to an approximate dynamic programming solution to the MDP, it is either too overconfident, causing many more near mid air collisions than the MDP approach, or it is too conservative, causing unnecessary disruption to normal flight.
+However, when this TRL is compared to an approximate dynamic programming solution to the MDP, it is too conservative, causing unnecessary disruption to normal flight.
 These tests demonstrate that there is a price that comes with certifiability and trustworthiness, and the performance gap between the approaches quantifies this price. Two alternative combinations of approximate dynamic programming and the TRL are considered as ways to reduce the price.
 
 First, approximate dynamic programming is applied to dynamically choose $D$ within a certified range based on the encounter state.

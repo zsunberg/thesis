@@ -1,0 +1,79 @@
+\begin{tikzpicture}[]
+\begin{axis}[height = {2.7in}, ylabel = {Fraction safe and successful}, xlabel = {True correlation}, legend style={at={(0.5,-0.2)}, anchor=north}, legend columns=2, grid=both, ymin = {0.9}, width = {3.5in}]\addplot+ [
+mark = {square*}, blue, mark options={fill=blue}, error bars/.cd, 
+x dir=both, x explicit, y dir=both, y explicit]
+table [
+x error plus=ex+, x error minus=ex-, y error plus=ey+, y error minus=ey-
+] {
+x y ex+ ex- ey+ ey-
+0.0 0.9544 0.0 0.0 0.01353728726055671 0.01353728726055671
+0.2 0.9528 0.0 0.0 0.01353728726055671 0.01353728726055671
+0.4 0.9554 0.0 0.0 0.01353728726055671 0.01353728726055671
+0.6 0.9582 0.0 0.0 0.01353728726055671 0.01353728726055671
+0.8 0.9624 0.0 0.0 0.01353728726055671 0.01353728726055671
+1.0 0.9626 0.0 0.0 0.01353728726055671 0.01353728726055671
+};
+\addlegendentry{POMCPOW ($\rho = 0.0$)}
+\addplot+ [
+mark = {*}, blue, mark options={fill=blue}, error bars/.cd, 
+x dir=both, x explicit, y dir=both, y explicit]
+table [
+x error plus=ex+, x error minus=ex-, y error plus=ey+, y error minus=ey-
+] {
+x y ex+ ex- ey+ ey-
+0.0 0.9498 0.0 0.0 0.01353728726055671 0.01353728726055671
+0.2 0.953 0.0 0.0 0.01353728726055671 0.01353728726055671
+0.4 0.9502 0.0 0.0 0.01353728726055671 0.01353728726055671
+0.6 0.955 0.0 0.0 0.01353728726055671 0.01353728726055671
+0.8 0.956 0.0 0.0 0.01353728726055671 0.01353728726055671
+1.0 0.9582 0.0 0.0 0.01353728726055671 0.01353728726055671
+};
+\addlegendentry{QMDP ($\rho = 0.0$)}
+\addplot+ [
+mark = {square*}, red, mark options={fill=red}, error bars/.cd, 
+x dir=both, x explicit, y dir=both, y explicit]
+table [
+x error plus=ex+, x error minus=ex-, y error plus=ey+, y error minus=ey-
+] {
+x y ex+ ex- ey+ ey-
+0.0 0.9452 0.0 0.0 0.01353728726055671 0.01353728726055671
+0.2 0.9508 0.0 0.0 0.01353728726055671 0.01353728726055671
+0.4 0.9552 0.0 0.0 0.01353728726055671 0.01353728726055671
+0.6 0.9598 0.0 0.0 0.01353728726055671 0.01353728726055671
+0.8 0.965 0.0 0.0 0.01353728726055671 0.01353728726055671
+1.0 0.9814 0.0 0.0 0.01353728726055671 0.01353728726055671
+};
+\addlegendentry{POMCPOW ($\rho = 1.0$)}
+\addplot+ [
+mark = {*}, red, mark options={fill=red}, error bars/.cd, 
+x dir=both, x explicit, y dir=both, y explicit]
+table [
+x error plus=ex+, x error minus=ex-, y error plus=ey+, y error minus=ey-
+] {
+x y ex+ ex- ey+ ey-
+0.0 0.9434 0.0 0.0 0.01353728726055671 0.01353728726055671
+0.2 0.9502 0.0 0.0 0.01353728726055671 0.01353728726055671
+0.4 0.9508 0.0 0.0 0.01353728726055671 0.01353728726055671
+0.6 0.9582 0.0 0.0 0.01353728726055671 0.01353728726055671
+0.8 0.9664 0.0 0.0 0.01353728726055671 0.01353728726055671
+1.0 0.9776 0.0 0.0 0.01353728726055671 0.01353728726055671
+};
+\addlegendentry{QMDP ($\rho = 1.0$)}
+\addplot+ [
+mark = {diamond*}, black, dashed, mark options={fill=black, dashed}, error bars/.cd, 
+x dir=both, x explicit, y dir=both, y explicit]
+table [
+x error plus=ex+, x error minus=ex-, y error plus=ey+, y error minus=ey-
+] {
+x y ex+ ex- ey+ ey-
+0.0 0.981 0.0 0.0 0.01353728726055671 0.01353728726055671
+0.2 0.977 0.0 0.0 0.01353728726055671 0.01353728726055671
+0.4 0.9784 0.0 0.0 0.01353728726055671 0.01353728726055671
+0.6 0.98 0.0 0.0 0.01353728726055671 0.01353728726055671
+0.8 0.978 0.0 0.0 0.01353728726055671 0.01353728726055671
+1.0 0.983 0.0 0.0 0.01353728726055671 0.01353728726055671
+};
+\addlegendentry{Omniscient}
+\end{axis}
+
+\end{tikzpicture}
