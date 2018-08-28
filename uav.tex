@@ -268,18 +268,27 @@ where the feature function $\beta$ returns a vector of $N_\beta$ feature values,
 
 \subsection{Approximate Value Iteration} \label{sec:iter}
 
-The bulk of the computation is carried out offline before vehicle deployment using simulation. Specifically, the first step is to estimate the optimal value function for problem \eqref{eq:prob} using value iteration \cite{DB:05}. On a continuous state space such as the encounter state space used in this work, the Bellman operator used in value iteration cannot be applied for each of the uncountably infinite number of states, so an approximation must be used. In this paper we adopt projected value iteration \cite{DB:05}. Each successive approximation, $\tilde{V}_k$, is the result of the Bellman operation projected onto a linear subspace with respect to the Euclidean norm, that is
+The bulk of the computation is carried out offline before vehicle deployment using simulation. Specifically, the first step is to estimate the optimal value function for problem \eqref{eq:prob} using value iteration \cite{DB:05}. On a continuous state space such as the encounter state space used in this work, the Bellman operator used in value iteration cannot be applied for each of the uncountably infinite number of states, so an approximation must be used.
+
+In this paper we adopt projected value iteration \cite{DB:05}. 
+In this algorithm, each successive value function approximation, $\tilde{V}_k$, is the result of the Bellman operation projected onto a linear subspace with respect to the Euclidean norm, that is
 \begin{equation}\label{eqn:projvi}
     \tilde{V}_{k+1}(s) = \Pi \mathcal{B}[\tilde{V}_k](s) \text{,}
 \end{equation}
 where $\mathcal{B}$ is the Bellman operator, and $\Pi$ is a projection onto the linear subspace $\Phi$ spanned by the $N_\beta$ basis functions (see \cite{DB:05} for a detailed discussion of this approach).
+
+Two important factors that make projected value iteration an attractive option compared to other approaches, in particular deep reinforcement learning~\cite{mnih2015human} are the following:
+% First, the ability to simulate independent transitions from arbitrary states with a generative model allows value iteration to be used rather than episode-based reinforcement learning where decorrelating data is an additional step.
+First, since it is relatively easy to choose a feature set that yields acceptable performance by hand (see \cref{sec:features}), more flexible function approximation approaches that also learn features, such as deep neural networks~\cite{goodfellow2016deep}, are not necessary.
+Second, the least squares optimization problem solved at each iteration of projected value iteration (\ref{eq:leastsq}) requires much less computation than the gradient descent required to train a neural network.
+% \footnote{Another factor contributing to this decision was that, at the time this research was originally conducted, the computational frameworks that are now commonly used for training neural networks were not yet mature.}
 
 Monte Carlo simulations are used to perform the approximate value iteration \eqref{eqn:projvi}. Specifically, for each iteration, $N_\text{state}$ states are uniformly randomly selected. If the states lie within the grids used in the feature function (see \Cref{sec:features}) the sample is ``snapped'' to the nearest grid point to prevent approximation errors due to the Gibbs phenomenon \cite{JF-FBR:91}. At each sampled state $s^{[n]}$, $n=1,\ldots, N_\text{state}$, the stage-wise reward and the expected value of the value function are evaluated for each action $a$ in $\tilde{\aspace}$. The expectation embedded in the Bellman operator is approximated using $N_{\text{EV}}$ \emph{single-step} intruder simulations, each with a randomly generated noise value, $w_m$, $m=1,\ldots, N_{\text{EV}}$. However, since the own UAV dynamics are deterministic, only one own UAV simulation is needed. The maximum over $\tilde{A}$ is selected and stored as the $n$th entry of a vector $v_{k+1}$:
 \begin{equation}
     v_{k+1}[n] := \max_{a \in \tilde{A}} \left\{\reward(s^{[n]},a) + \frac{1}{N_{\text{EV}}}\sum_{m=1}^{N_{\text{EV}}} \beta(F(s^{[n]}, a, w_m))^\top \theta_k \right\} \text{,}
 \end{equation}
 for $n=1,\ldots, N_\text{state}$. Here $v_{k+1}$ provides an approximation to the (unprojected) value function. To project $v_{k+1}$ onto $\Phi$, we compute the weight vector $\theta_{k+1}$ by solving the least-squares optimization problem
-\begin{equation}
+\begin{equation} \label{eq:leastsq}
     \theta_{k+1} = \underset{\theta\in \reals^{N_\beta}}{\argmin} \sum_{n=1}^{N_\text{state}} \left( \beta\left(s^{[n]}\right)^\top \theta - v_{k+1}[n] \right) ^2 \text{.}
 \end{equation}
 Iteration is terminated after a fixed number of steps, $N_{VI}$, and the resulting weight vector, denoted by $\theta$, is stored for the next processing step (Section \ref{sec:extract}).
@@ -357,25 +366,20 @@ Our strategy is to separate features into two groups (along with a constant), sp
 \end{equation}
 The first group, $\beta_\text{intruder}$, captures the features corresponding to a near midair collision and is a function of only the position and orientation of the own vehicle relative to the intruder. The second group, $\beta_\text{goal}$, captures the value of being near the goal and is a function of only the own vehicle state.
 
-\begin{figure}
+\begin{figure}[p]
     \centering
-    \begin{subfigure}[t]{0.48\textwidth}
-        \includegraphics[width=\textwidth]{media/intruder_grid_plus.pdf}
-        \caption[Intruder interpolation grid]{Intruder interpolation grid for $\beta_\text{intruder}$, visualized when the intruder is located at (\SI{700}{m}, \SI{-250}{m}) at heading \num{135}. The top left inset shows the variables used. In the main plot, each of the small arrows represents a grid point. At each of the point locations, there are twelve small arrows radiating out. Each arrow represents a different UAV heading.}
-        \label{fig:intrudergrid}
-    \end{subfigure}
-    \hfill
-    \begin{subfigure}[t]{0.48\textwidth}
-        \includegraphics[width=\textwidth]{media/goal_grid_plus.pdf}
-        \caption[Goal interpolation grid]{Goal interpolation grid for $\beta_\text{goal}$ when the own UAV's heading is directly north. The grid takes advantage of symmetry in the bearing variable, so, for each arrow on the left side, there is an arrow on the right side that corresponds with the \emph{same} point in the grid.}
-        \label{fig:goalgrid}
-    \end{subfigure}
-    \caption{Value function approximation interpolation grids}
+    \includegraphics[width=0.8\textwidth]{media/intruder_grid_plus.pdf}
+    \caption[Intruder interpolation grid]{Intruder interpolation grid for $\beta_\text{intruder}$, visualized when the intruder is located at (\SI{700}{m}, \SI{-250}{m}) at heading \num{135}. The top left inset shows the variables used. In the main plot, each of the small arrows represents a grid point. At each of the point locations, there are twelve small arrows radiating out. Each arrow represents a different UAV heading.}
+    \label{fig:intrudergrid}
+\end{figure}
+\begin{figure}[p]
+    \centering
+    \includegraphics[width=0.8\textwidth]{media/goal_grid_plus.pdf}
+    \caption[Goal interpolation grid]{Goal interpolation grid for $\beta_\text{goal}$ when the own UAV's heading is directly north. The grid takes advantage of symmetry in the bearing variable, so, for each arrow on the left side, there is an arrow on the right side that corresponds with the \emph{same} point in the grid.}
+    \label{fig:goalgrid}
 \end{figure}
 
-Since the domain of $\beta_\text{intruder}$ is only three dimensional and the domain of $\beta_\text{goal}$ is only two dimensional, relatively fine interpolation grids can be used for value function approximation without requiring a prohibitively large number of features. The $\beta_\text{intruder}$ feature group consists of a NMAC indicator function and interpolation weights for a grid (\Cref{fig:intrudergrid}) with nodes at regularly spaced points along the following three variables: (1) the distance between the UAV and intruder, (2) the bearing from the intruder to the UAV, and (3) the relative heading between the vehicles. The $\beta_\text{goal}$ vector consists of a goal indicator function, the distance between the UAV and the goal, and interpolation weights for a grid
-%(\Cref{fig:goalgrid})
-with nodes regularly spaced along the distance between the UAV and the goal and the absolute value of the bearing to the goal from the UAV. The total number of features is $N_\beta = 1813$.
+Since the domain of $\beta_\text{intruder}$ is only three dimensional and the domain of $\beta_\text{goal}$ is only two dimensional, relatively fine interpolation grids can be used for value function approximation without requiring a prohibitively large number of features. The $\beta_\text{intruder}$ feature group consists of a NMAC indicator function and interpolation weights for a grid (\Cref{fig:intrudergrid}) with nodes at regularly spaced points along the following three variables: (1) the distance between the UAV and intruder, (2) the bearing from the intruder to the UAV, and (3) the relative heading between the vehicles. The $\beta_\text{goal}$ vector consists of a goal indicator function, the distance between the UAV and the goal, and interpolation weights for a grid (\Cref{fig:goalgrid}) with nodes regularly spaced along the distance between the UAV and the goal and the absolute value of the bearing to the goal from the UAV. The total number of features is $N_\beta = 1813$.
 
 
 \section{Results} \label{sec:results}
@@ -446,7 +450,7 @@ Of these simulations, \num{1009} result in a NMAC if the UAV follows its nominal
 
 The fraction of collisions avoided is estimated using a separate set of \num{10000} simulations. Each of these simulations has an initial condition in the same region described above, but initial conditions and noise trajectories are chosen by filtering random trials so that each of the simulations \emph{will result in a NMAC if the own UAV follows its nominal path}.
 
-\begin{table}[tb]
+\begin{table}[tbp]
     \caption{Parameters for numerical experiments} \label{tab:uparams}
     \centering
     \begin{tabular}{p{0.6\columnwidth} l r}
@@ -470,16 +474,16 @@ The fraction of collisions avoided is estimated using a separate set of \num{100
     \end{tabular}
 \end{table}
 
-\begin{figure}[tb]
+\begin{figure}[tbp]
     \centering
     \includegraphics[width=0.8\columnwidth]{media/intruderics.png}
     \caption[Intruder initial conditions]{Intruder initial conditions for evaluation simulations. Each small black arrow is an intruder initial state. The large green arrow is the UAV's initial state. The red dot is the goal.}
     \label{fig:intruderics}
 \end{figure}
 
-\begin{figure}[tb]
+\begin{figure}[tbp]
     \centering
-    \includegraphics[width=\columnwidth]{media/pareto.pdf}
+    \includegraphics[width=0.7\columnwidth]{media/pareto.pdf}
     \caption[Policy performance comparison]{Policy performance comparison. The values of $\lambda$ used to generate the datapoints are \num{100}, \num{316}, \num{1000}, \num{3160}, \num{e4}, and \num{3.16e4} for the optimized TRL policy and \num{300}, \num{500}, \num{700}, \num{1000}, and \num{1500} for the directly optimized approach. The values of $\bar{D}$ for the static TRL policy are \SI{250}{m}, \SI{300}{m}, \SI{350}{m}, \SI{400}{m}, and \SI{500}{m}.}
        \label{fig:pareto}
 \end{figure}
@@ -518,7 +522,7 @@ This approach should also be easy to certify, and it largely closes the performa
 
 There are many potential extensions for this work.
 First, the function approximation for the value iteration could be improved.
-The feature-based approach used here worked well, but the selection of the features was mostly heuristically justified, and another more advanced and general approximation technique such as neural networks may work better.
+The feature-based approach used here worked well, but the selection of the features was mostly heuristically justified, and another more advanced and general approximation technique such as neural networks~\cite{goodfellow2016deep} may work better.
 Most importantly, the uncertainty model should be improved.
 The current model was not justified with data, and it is extremely unlikely that a Gaussian noise model reflects real intruder behavior.
 It is much more plausible that the intruder has an operational intention unknown to the UAV which should be modeled as a hidden state in the problem.

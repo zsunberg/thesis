@@ -335,5 +335,6 @@ The POMDP domain is much more diverse and complex than the optimization domains 
 
 Second, many of the solvers are far from achieving the full performance potential of the algorithms that they implement.
 Since most modern hardware performance increases are due to parallelism rather than single-process speed increases, one of the most important factors in speeding up solver code is parallel implementation.
-Though Julia has built-in tools for parallel processing, only a few of the solvers have parallel capabilities because many of the important factors in efficient parallelism, such as proper cache usage, have many pitfalls.
+Julia has basic built-in tools for parallel processing, but there are still several pitfalls for implementing parallel code.
+For example, since modern processors use caching extensively to improve memory access, efficient parallel code should only access memory that is likely to be in the local cache and not being used by another processor~\cite{drepper2007every}.
 An investment of effort into parallelizing solver code would make the POMDPs.jl ecosystem much more useful.

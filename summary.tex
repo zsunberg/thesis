@@ -9,7 +9,7 @@ The remainder of this chapter reviews the specific contributions of this thesis 
 
 \section{Contributions and Summary}
 
-The first contribution (\cref{chap:uav}) is an investigation into the combination of trusted resolution logic and optimization for UAV collision avoidance.
+The first contribution (\cref{chap:uav}) is an investigation into the \textbf{combination of trusted resolution logic and optimization} for UAV collision avoidance.
 Simple TRL has the advantage that guarantees about its operation are relatively easy to certify.
 However, a comparison between simple TRL alone and MDP optimization shows that there is a price in terms of both safety and efficiency accrued for using the TRL.
 To reduce this price, two methods for combining the approaches are investigated.
@@ -17,27 +17,27 @@ The first is to use an MDP policy to dynamically adjust the parameters of the TR
 The second is to use the TRL as a constraint on the actions that the MDP policy can choose.
 Simulation experiments show that the second approach is superior.
 
-The second contribution (\cref{chap:multilane}) is a study of uncertainty modeling in decision making for autonomous highway lane changing.
+The second contribution (\cref{chap:multilane}) is a \textbf{study of uncertainty modeling in decision making for autonomous highway lane changing}.
 This chapter considered approximate POMDP solutions where the internal states of other drivers are explicitly modeled as a hidden part of the Markov state.
 The POMDP solutions are compared with approximate MDP solutions, both assuming full knowledge of the internal state and conservatively modeling state uncertainty as outcome uncertainty.
-The advantage of POMDP solutions over MDP solutions is clear in all of the tests, but the relative effectiveness of different POMDP approximations depends greatly on the correlation of the different internal state parameters.
+\textbf{The advantage of POMDP solutions over MDP solutions is clear} in all of the tests, but the relative effectiveness of different POMDP approximations depends greatly on the correlation of the different internal state parameters.
 Simulation tests show that when the parameters are highly correlated, since it is easier to estimate the hidden states, even greatly simplified POMDP approximations can achieve performance near the upper bound established by an omnipotent planner.
 On the other hand, when there is little or no correlation, POMDP solution methods that include more of the uncertainty in the solution process perform significantly better.
 Experiments also characterize the robustness of the algorithms with respect to the parameter distribution.
 
-The third contribution (\cref{chap:pomcpow}) is a pair of improved algorithms for solving POMDPs online.
+The third contribution (\cref{chap:pomcpow}) is a pair of \textbf{improved algorithms for solving POMDPs online}.
 Previous leading online algorithms have focused on solving discrete problems, and are unable to solve problems with continuous action and observation spaces.
 Hence, new algorithms for the continuous domains encountered in the real world are needed.
-The first part of this contribution (\cref{sec:pomcpdpw}) is proving that a naive application of double progressive widening to the POMCP algorithm will result in suboptimal behavior.
+The first part of this contribution (\cref{sec:pomcpdpw}) is proving that \textbf{a naive application of double progressive widening to the POMCP algorithm will result in suboptimal behavior}.
 In particular, in a continuous observation space, it will converge to the QMDP solution because each belief node will degenerate to a single state particle (\cref{thm:qmdp}).
 In fact, numerical experiments confirm that all leading online solvers exhibit this behavior.
 
 In response to this suboptimality, two new algorithms are proposed (\cref{sec:pftdpw,sec:pomcpow}).
-The first, PFT-DPW, solves an approximation of the belief MDP, while the second, POMCPOW, is an extension of POMCP with double progressive widening and weighted particle filtering.
+The first, PFT-DPW, solves an approximation of the belief MDP, while the second, \textbf{POMCPOW}, is an extension of POMCP with double progressive widening and weighted particle filtering.
 Numerical experiments (\cref{sec:experiments}) show that these algorithms are able to break the QMDP barrier and hence exhibit performance that is qualitatively superior to previous algorithms.
 POMCPOW and PFT-DPW perform similarly on most problems, but on the most realistic problem, a version of the autonomous driving problem from~\cref{chap:multilane}, POMCPOW outperforms PFT-DPW.
 
-The final contribution (\cref{chap:pomdpsjl}) is a software framework, POMDPs.jl, which provides an interface for expressing MDPs and POMDPs and tools for developing and testing solvers.
+The final contribution (\cref{chap:pomdpsjl}) is a software framework, \textbf{POMDPs.jl}, which provides an interface for expressing MDPs and POMDPs and tools for developing and testing solvers.
 This framework is unprecedented in its flexibility.
 It can represent discrete and continuous MDPs defined by both explicit probability distributions and simulators that provide generative models.
 The Julia language also gives solvers written to use the framework speed comparable to previous C++ implementations.

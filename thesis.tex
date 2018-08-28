@@ -35,6 +35,9 @@
 \usepackage{listings}
 \usepackage{float}
 
+\renewcommand\algorithmicthen{}
+\renewcommand\algorithmicdo{}
+
 \pgfplotsset{every axis/.append style={font=\footnotesize,legend cell align=left}}
 
 \usepackage[natbib,
@@ -42,7 +45,8 @@
             maxnames=6,
             sorting=nyt,
             doi=false,
-            backref=true
+            backref=true,
+            isbn=false
            ]{biblatex}
 
 \AtEveryBibitem{
@@ -199,7 +203,7 @@
 
 %the following command would (if uncommented) allow  only chapter1 and
 %chapter2 to be processed
-%\includeonly{multilane}
+% \includeonly{pomcpow}
 
 % if you feel real savvy use
 % \typein{Now put in includeonly}
@@ -216,12 +220,9 @@
 
 \prefacesection{Abstract}
 
-Effective autonomous air and ground vehicles will need to maintain safety while accomplishing tasks efficiently in terms of time and other resources.
-Unfortunately, the objectives of safety and efficiency are fundamentally opposed because safety constraints prohibit some efficient actions.
+To be effective, autonomous air and ground vehicles should maintain safety while accomplishing tasks efficiently in terms of time and other resources.
+Unfortunately, the objectives of safety and efficiency are fundamentally opposed because safety precautions prohibit some efficient actions.
 Moreover, the presence of uncertainty about the environment makes planning safe and efficient actions more difficult.
-% Accurate models of this uncertainty coupled with effective planning algorithms can accomplish these goals.
-% The interaction between safety and efficiency for autonomous vehicles is made more difficult by the presence of uncertainty.
-% Planning with good models of this uncertainty allows the vehicle to make better decisions about which actions are safe and is a key to operating efficiently.
 
 The Markov decision process (MDP) is a systematic framework for modelling sequential decision problems with outcome uncertainty, and the partially observable Markov decision process (POMDP) adds the additional ability to model state uncertainty.
 MDPs and POMDPs are suitable models for a wide range of situations that an autonomous vehicle might face.
@@ -229,8 +230,7 @@ However, obtaining the exact solution to a general POMDP is an intractable probl
 This thesis considers approximate MDP and POMDP solutions and seeks to quantify their utility for autonomous vehicles.
 Specifically, it contains four contributions.
 
-First, the thesis analyzes the use of a certifiable safety constraint alongside approximate optimization in the context of unmanned aerial vehicle (UAV) collision avoidance.
-% UAV collision avoidance is challenging in particular because small unmanned vehicles often do not have the performance capability or legal permission to perform conventional altitude-based conflict resolution maneuvers, so they must perform more complex horizontal conflict resolution.
+First, the thesis analyzes the use of a certifiable safety constraint alongside approximate optimization in the context of unmanned aerial vehicle collision avoidance.
 In order to ensure safety, aerospace systems have particularly stringent certification requirements that likely preclude approximate randomized planning techniques capable of handling uncertainty.
 This work evaluates the performance price that comes with using a simple certified policy and shows that MDP and POMDP optimization can significantly reduce that price and improve both safety and efficiency simultaneously.
 
@@ -250,7 +250,6 @@ Numerical experiments show that they are able to solve problems where previous m
 
 The final contribution is a software package, POMDPs.jl, which uses the features of the Julia programming language to bring state-of-the-art POMDP solution methods to bear on problems defined through an interface that provides convenience and flexibility.
 
-% A great deal of future work remains, including further mathematical analysis of the algorithms and testing with more realistic models of human behavior. But the contributions of this thesis to understanding the affects of uncertainty modeling and developing algorithms that apply to realistic problems are two vital steps on the path to safe and efficient autonomy.
 
 % first the preface sections.  
 
@@ -265,10 +264,34 @@ The final contribution is a software package, POMDPs.jl, which uses the features
 
 % the last preface section (e.g., acknowledgement.tex)
 % should look like
-% \prefacesection{Acknowledgement}
+\prefacesection{Acknowledgements}
+
+The biggest debt of gratitude that I owe to any single person for this thesis is to my advisor, Mykel Kochenderfer.
+In my opinion, the most admirable thing about Mykel is not the quality of work that he produces (though that is quite impressive), but his commitment and care for students as researchers and people.
+I will always think of his office as one of my favorite places of learning on campus.
+He took me on as a student during a time of struggling in my research and helped me finish strong.
+
+I also owe a great deal to Marco Pavone, who was my advisor for the first half of this endeavor.
+Additionally, my thanks goes out to Dan DeBra, who brought me here to Stanford, and Suman Chakravorty and Jon Rogers who were instrumental in my early growth as a researcher at Texas A\&M.
+I am also thankful to the other members of my defense committee: Mac Schwager, Chris Gerdes, and Dorsa Sadigh.
+
+A PhD is not a disembodied pursuit of knowledge, but a journey undertaken by a human with a heart and soul and flaws and weaknesses.
+As such, I must thank my community here at Stanford for their care of me as a human exploring God's creation.
+Grace Presbyterian church provided a place of connection and growth for me, and my friends gave me constant support.
+In particular, two friends, Jeff Reid and Daniel Galbraith, should be noted for their faithfulness over the entire time I was here.
+Moreover, I certainly would not be here without my parents and sister and the rest of my family and friends who have been shaping me for my entire life.
+
+I was fortunate to be a part of two outstanding labs during my time here, the Autonomous Systems Lab and the Stanford Intelligence Systems Lab, both of which gave me comraderie and sharpened my technical skills.
+I'll remember both the hard work and fun that I had in these places.
+
+The work in this thesis would not have been possible without the generous financial support that I received from a variety of sources including MIT Lincoln Laboratory, the National Science Foundation, the U.S.\ Naval Research Laboratory, and Toyota Resarch Institute.
+I must also recognize the leadership and staff of Stanford University and the Aeronautics and Astronautics department.
+They have created a remarkable environment for learning.
+
 % body 
-\afterpreface
 % \include{acknowledgement}
+
+\afterpreface
 
 
 % now for the body of the thesis, modify the number of these lines as needed

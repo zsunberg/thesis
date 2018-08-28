@@ -1,7 +1,7 @@
 % \chapter{Planning with Internal States in Freeway Driving} \label{chap:multilane}
 \chapter{Planning with Internal States in Driving} \label{chap:multilane}
 
-The second in-depth investigation of this thesis is in the area of autonomous driving.
+The second investigation of this thesis is in the area of autonomous driving.
 \cref{chap:uav} focuses on finding the best way to integrate certifiable safety constraints, but uses a simplistic stochastic model for the intruder the UAV interacts with.
 This chapter keeps the safety constraint architecture discovered in the last chapter as a constraint on the action space that guarantees there will be no crashes (\cref{sec:action}), but the chapter focuses primarily on investigating a richer stochastic model.
 In particular, it demonstrates the advantage of using a model with other agents' internal states represented using state uncertainty in the problem formulation.
@@ -246,7 +246,7 @@ The fourth approach uses MCTS-DPW to solve the QMDP approximation of the POMDP (
 \subsection{Approach 5: POMCPOW}
 
 The final approach uses the POMCPOW solver described in \cref{sec:pomcpow}.
-Though there is no theoretical guarantee that this approach will converge to an optimality, this is the closest approximation to the exact POMDP solution
+Though there is no theoretical guarantee that this approach will converge to an optimality, this is the closest approximation to the exact POMDP solution.
 
 \section{Results}
 
@@ -262,11 +262,21 @@ In all of these scenarios, drivers behave according to the IDM and MOBIL models 
 \Cref{tab:modelparams} shows typical parameter values for aggressive, timid, and normal drivers.
 The values are taken from \citet{kesting2009agents}, but some have been adjusted slightly so that the parameters for the normal driver are exactly half way between values for the timid and aggressive drivers.
 In all three of the scenarios, the \emph{marginal} distributions of the parameters are uniformly distributed between the aggressive and timid values.
+
 The difference between the scenarios is the correlation of the parameter values.
+In order to maintain consistent marginal distributions while varying the correlation, copulas are used.
+A copula is a multivariate distribution with uniform marginal distributions, but a joint distribution that causes the variables to have nonzero correlation \cite{nelsen2007introduction}.
+An $n$-dimensional Gaussian copula is defined by a correlation matrix, $\Sigma$, and has a cumulative distribution function defined as follows:
+\begin{equation}
+    F_{\text{GC}}(x) = \Phi_\Sigma (\Phi^{-1}(x_1), ... , \Phi^{-1}(x_n))\text{,}
+\end{equation}
+where $\Phi_\Sigma$ is the cumulative distribution function for a multivariate Gaussian distribution with covariance $\Sigma$, and $\Phi^{-1}$ is the inverse cumulative distribution function for a univariate Gaussian distribution.
+If random vector $X$ has cumulative distribution function $F_{\text{GC}}$, then for any $i, j \in 1..n, i \neq j$, the correlation between $X_i$ and $X_j$ is $\Sigma_{ij}$.
+
 In Scenario 1, all of the parameters are independently distributed.
-In Scenario 2, all of the parameters are perfectly correlated so that all parameters are deterministic functions of the aggressiveness of the driver.
-Scenario 3 uses a distribution between these two extremes.
-In this scenario, values are drawn from a Gaussian copula with covariance matrix
+In Scenario 2, all of the parameters are perfectly correlated so that all parameters are deterministic functions of a single uniformly-distributed random variable, the ``aggressiveness'' of the driver.
+In Scenario 3, the distribution is correlated between these two extremes.
+Specifically, it is a Gaussian copula with covariance matrix
 \begin{equation}
     \Sigma = \begin{bmatrix}
         1 & \rho & \dots & & \rho \\
@@ -276,8 +286,9 @@ In this scenario, values are drawn from a Gaussian copula with covariance matrix
         \rho & & \dots & \rho & 1
     \end{bmatrix}\text{,}
 \end{equation}
-that is, a matrix with 1 along the diagonal and $\rho$ elsewhere.
-The values are then scaled and translated to lie between the aggressive and normal limits.
+that is, a matrix with 1 along the diagonal and correlation parameter $\rho$ elsewhere.
+The values drawn from this distribution are scaled and translated to lie between the aggressive and normal limits.
+
 For Scenario 3, the value of $\rho$ is \num{0.75}, and Scenarios 1 and 2 can be thought of as limiting cases where $\rho$ approaches 0 and 1, respectively.
 In Scenarios 1 and 3, the first version of the particle filter, which estimates all of the model parameters jointly, is used, whereas in Scenario 2, the second version of the particle filter that assumes fully correlated parameters is used, that is, it only estimates a single ``aggressiveness'' parameter for each car.
 The mean MPC planner uses this ``aggressiveness'' parameter for all scenarios because this resulted in better performance.
@@ -497,7 +508,7 @@ Both MDP solutions that ignore the internal states of other drivers, and POMDP s
 An upper performance bound is established by planning with full knowledge of the internal states.
 In order to remain agnostic with regard to the relative importance of safety and efficiency, Pareto frontiers are compared.
 
-POMDP approaches are compared to both a conservative MDP formulation that models internal state uncertainty as outcome uncertainty and an overly confident MDP approach where knowledge of the internal state is assumed
+POMDP approaches are compared to both a conservative MDP formulation that models internal state uncertainty as outcome uncertainty and an overly confident MDP approach where knowledge of the internal state is assumed.
 The advantage of the POMDP approaches is clear in all of the tests.
 However, the relative effectiveness of different POMDP approaches is heavily dependent on the correlation of the distributions of the internal states.
 If the internal states are highly correlated, simply estimating them with a particle filter and planning assuming certainty equivalence is adequate to nearly match the upper performance bound.
@@ -519,7 +530,7 @@ Planning based on the possible intentions of other drivers would likely be an ev
 The results of this investigation should also be used to guide future research into modeling.
 In particular, since correlation is such a significant factor influencing performance, it is important to determine whether internal states that determine behavior are correlated with easily measured quantities in real human drivers.
 
-Finally, in order to isolate the effects of uncertainty modeling in this problem, the solution algorithm family in this investigation is limited to variants of Monte Carlo tree search that use double progressive widening.
-More advanced planning techniques should also be investigated.
+Finally, more advanced planning techniques, such as the DESPOT algorithm, should also be investigated.
+In order to isolate the effects of uncertainty modeling, the solution algorithms in this investigation were limited to variants of Monte Carlo tree search that use double progressive widening.
 The next chapter analyzes online algorithms for solving POMDPs with continuous observation spaces like the problem addressed here.
-In addition to proposing the POMCPOW algorithm used in this chapter, it includes a comparison of another advanced algorithm, DESPOT, on this problem and shows that it outperforms POMCPOW because of its ability to plan with a longer effective horizon.
+In addition to proposing the POMCPOW algorithm used in this chapter, it includes a comparison with DESPOT on this problem and shows that it outperforms POMCPOW because of its ability to plan with a longer effective horizon.
