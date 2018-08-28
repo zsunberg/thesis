@@ -1,7 +1,7 @@
 \chapter{Proof of Theorem 1} \label{sec:proof}
 
 A version of Monte Carlo tree search with double progressive widening has been proven to converge to the optimal value function on fully observable MDPs by \citet{auger2013continuous}.
-We use this proof to show that POMCP-DPW converges to a solution that is sometimes suboptimal.
+We use this proof to show that POMCP-DPW converges to the QMDP solution.
 
 First we establish some preliminary definitions taken directly from \citet{auger2013continuous}.
 
@@ -83,10 +83,11 @@ This version of the algorithm will be referred to as ``modified POMCP-DPW''. The
 
 We now define the ``QMDP value'' that POMCP-DPW converges to (this is repeated from the main text of the paper) and prove a preliminary lemma.
 
-\begin{definition}[QMDP value]
-     Let $Q_\text{MDP}(s,a)$ be the optimal state-action value function assuming full observability starting by taking action $a$ in state $s$.
-     The \emph{QMDP value} at belief $b$, $Q_\text{MDP}(b,a)$, is the expected value of $Q_\text{MDP}(s,a)$ when $s$ is distributed according to $b$.   
-\end{definition}
+\qmdpvalue*
+% \begin{definition}[QMDP value]
+%      Let $Q_\text{MDP}(s,a)$ be the optimal state-action value function assuming full observability starting by taking action $a$ in state $s$.
+%      The \emph{QMDP value} at belief $b$, $Q_\text{MDP}(b,a)$, is the expected value of $Q_\text{MDP}(s,a)$ when $s$ is distributed according to $b$.   
+% \end{definition}
 
 \begin{lemma} \label{lem:onestate}
     If POMCP-DPW or modified POMCP-DPW is applied to a POMDP with a continuous observation space and observation probability density functions that are finite everywhere, then each history node in the tree will have only one corresponding state, that is $|B(h)| = 1, M(h)=1\, \forall h$.
@@ -132,7 +133,7 @@ is based on the specific coefficients chosen by \citet{auger2013continuous} and 
         \end{cases}
     \end{equation}
     This is simply the fully observable MDP augmented with a special state representing the current belief.
-    It is clear that the value function for this problem $Q_\mathcal{M}(b, a)$ is the same as the QMDP value for the POMDP, $Q_\text{MDP}(b,a)$.
+    It is clear that the value function for this problem, $Q_\mathcal{M}(b, a)$, is the same as the QMDP value for the POMDP, $Q_\text{MDP}(b,a)$.
     Thus, by showing that modified POMCP-DPW behaves exactly as PUCT applied to $\mathcal{M}$, we show that it estimates the QMDP values.
 
     % For the above definition, we assume the state space is integrable. Is that ok without stating?

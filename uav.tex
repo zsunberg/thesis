@@ -59,7 +59,7 @@ The problem of avoiding an intruder using one of the strategies above is formula
         The state components $\rs$ and $\is$ are specified in Section \ref{sec:veh}.
         To model termination, the state space $S$ includes a ``dummy" termination state, denoted with $\sterm$.
     \item The action space, $A$: The action space differs for the two approaches as described in detail in \Cref{sec:aspaces}. $a$ will be used to refer to all types of action depending on the context.
-    \item The state transition probability density function, $T: S \times A \times S \to \mathbb{R}$: The value $T(s,D,s')$ is the probability density of transitioning to state $s'$ given that the separation parameter $D$ is used within the TRL at state $s$. This function is implicitly defined by a generative model that consists of a state transition function $F(\cdot)$ (described in \Cref{sec:control}) and a stochastic process $W$ (described in \Cref{sec:veh}).
+    \item The state transition probability density function, $T: S \times A \times S \to \mathbb{R}$: The value $T(s,a,s')$ is the probability density of transitioning to state $s'$ given that action $a$ is taken at state $s$. This function is implicitly defined by a generative model that consists of a state transition function $F(\cdot)$ (described in \Cref{sec:control}) and a stochastic process $W$ (described in \Cref{sec:veh}).
     \item The reward, $\reward:\sspace \times \aspace \to \reals$: The reward function, defined in \Cref{sec:rew}, rewards reaching a goal and penalizes near mid air collisions (NMACs), deviation from the nominal path, and time outside a goal region.
 \end{itemize}
 
@@ -125,7 +125,7 @@ If the UAV reaches the goal region at some time $t$, i.e., $s_t \in S_\text{goal
 
 Let the state transition function, defined by \eqref{eq:idyn}, \eqref{eq:odyn}, and the special cases above, be denoted concisely as $F$ so that  
 \begin{equation}\label{eq:sys_dyn}
-    s_{t+1} = F(s_t, \own{\phi}_t, w_t) \text{,}
+    s_{t+1} = F(s_t, \own{\phi}_t, w_t) \text{.}
 \end{equation}
 
 
@@ -167,6 +167,8 @@ In this case, $\psicand$ should be understood to be the UAV heading angle corres
 
 \subsubsection{Discrete Heading Optimization}
 
+The TRL begins with a discrete set of potential heading values (each denoted $\psicand$) for the UAV. It then determines, for a desired separation distance $D$,  which of those will not result in a collision given that the UAV and  intruder maintain their headings. Finally, it selects the value from that set which is closest to $\psigoal$. The TRL is outlined in \cref{alg:trl}.
+
 \renewcommand{\algorithmicrequire}{\textbf{Input:}}
 \renewcommand{\algorithmicensure}{\textbf{Output:}}
 \begin{algorithm}[tbhp]
@@ -189,7 +191,6 @@ In this case, $\psicand$ should be understood to be the UAV heading angle corres
 \end{algorithmic}
 \end{algorithm}
 
-The TRL begins with a discrete set of potential heading values (each denoted $\psicand$) for the UAV. It then determines, for a desired separation distance $D$,  which of those will not result in a collision given that the UAV and  intruder maintain their headings. Finally, it selects the value from that set which is closest to $\psigoal$. The TRL is outlined in \cref{alg:trl}.
 
 \subsection{Action Spaces and Control Systems}\label{sec:aspaces}
 
@@ -209,7 +210,7 @@ Specifically, it is the set of bank angles that the TRL deems safe, that is $\td
 
 In the optimized TRL approach, the actions are the possible values for the separation distance, that is $\trl{\aspace} = D\in \reals_{\geq 0}$ used in the TRL (see Figure \ref{fig:trl}).
 A simple low level control system converts the desired heading from the TRL (denoted $\psires$) and into a bank angle for the vehicle.
-We write this as
+This is denoted with
 \begin{equation}
     \own{\phi}_t = c\left(\own{s}_t, \psires \right) \text{,}
 \end{equation}
@@ -260,7 +261,7 @@ First, only a small number of discrete actions, which will be referred to as $\t
     \tdo{\tilde{\aspace}}(s) &= \left\{\phi \in \diro{\tilde{\aspace}} : d_\text{min}\left(F(s, \phi, 0)\right) > D_\text{NMAC} \right\} \text{.}
 \end{align}
 
-The second approximation is the approximate value iteration algorithm \cite{DB:05} used to optimize the policy. The value function, $V$, represents the expected value of the future reward given that the encounter is in state $s$ and an optimal policy will be executed in the future. We approximate $V$ with a linear architecture of the form  \cite{DB:05}
+The second approximation is the approximate value iteration algorithm \cite{DB:05} used to optimize the policy. The value function, $V$, represents the expected value of the future reward given that the encounter is in state $s$ and an optimal policy will be executed in the future. We approximate $V$ with a linear architecture of the form
 \begin{equation}\label{eqn:val}
     \tilde{V}(s) = \beta(s)^\top \theta \text{,}
 \end{equation}
@@ -277,7 +278,7 @@ In this algorithm, each successive value function approximation, $\tilde{V}_k$, 
 \end{equation}
 where $\mathcal{B}$ is the Bellman operator, and $\Pi$ is a projection onto the linear subspace $\Phi$ spanned by the $N_\beta$ basis functions (see \cite{DB:05} for a detailed discussion of this approach).
 
-Two important factors that make projected value iteration an attractive option compared to other approaches, in particular deep reinforcement learning~\cite{mnih2015human} are the following:
+Two important factors that make projected value iteration an attractive option compared to other approaches, in particular deep reinforcement learning~\cite{mnih2015human}, are the following:
 % First, the ability to simulate independent transitions from arbitrary states with a generative model allows value iteration to be used rather than episode-based reinforcement learning where decorrelating data is an additional step.
 First, since it is relatively easy to choose a feature set that yields acceptable performance by hand (see \cref{sec:features}), more flexible function approximation approaches that also learn features, such as deep neural networks~\cite{goodfellow2016deep}, are not necessary.
 Second, the least squares optimization problem solved at each iteration of projected value iteration (\ref{eq:leastsq}) requires much less computation than the gradient descent required to train a neural network.
@@ -291,7 +292,7 @@ for $n=1,\ldots, N_\text{state}$. Here $v_{k+1}$ provides an approximation to th
 \begin{equation} \label{eq:leastsq}
     \theta_{k+1} = \underset{\theta\in \reals^{N_\beta}}{\argmin} \sum_{n=1}^{N_\text{state}} \left( \beta\left(s^{[n]}\right)^\top \theta - v_{k+1}[n] \right) ^2 \text{.}
 \end{equation}
-Iteration is terminated after a fixed number of steps, $N_{VI}$, and the resulting weight vector, denoted by $\theta$, is stored for the next processing step (Section \ref{sec:extract}).
+Iteration is terminated after a fixed number of steps, $N_{VI}$, and the resulting weight vector, denoted $\theta$, is stored for the next processing step (Section \ref{sec:extract}).
 
 \subsection{Post Decision Value Function Extraction} \label{sec:extract}
 
@@ -384,11 +385,11 @@ Since the domain of $\beta_\text{intruder}$ is only three dimensional and the do
 
 \section{Results} \label{sec:results}
 
-This section presents results from numerical experiments that illustrate the effectiveness of the new approach. The experiments are designed to compare the four approaches discussed in \cref{sec:uavintro}: the ``static TRL'' approach, ``direct optimization'', and the new ``optimized TRL'' and ``trusted direct optimization'' approaches proposed in this chapter. The static TRL law uses the TRL described in \cref{alg:trl} with a constant value for the separation distance (denoted with $\bar{D}$), while the other approaches use the approximate optimization procedure described in \cref{sec:approach}. The various parameters used in the numerical experiments are listed in \cref{tab:uparams}.
+This section presents results from numerical experiments that illustrate the effectiveness of the new approach. The experiments are designed to compare the four approaches discussed in \cref{sec:uavintro}: the ``static TRL'' approach, ``direct optimization'', and the new ``optimized TRL'' and ``trusted direct optimization'' approaches proposed in this chapter. The static TRL control law uses the TRL described in \cref{alg:trl} with a constant value for the separation distance (denoted with $\bar{D}$), while the other approaches use the approximate optimization procedure described in \cref{sec:approach}. The various parameters used in the numerical experiments are listed in \cref{tab:uparams}.
 
 \subsection{Policies}
 
-This section includes visualizations of two-dimensional ``slices'' of several UAV policies and their associated value functions. In each of the slices, the intruder is located at (\SI{700}{m},\SI{-250}{m}) pointed at heading 135 as indicated by the arrow. The goal is at (\SI{1000}{m},\num{0}). Each pixel on this image represents the value function or policy evaluated with the UAV at that position pointed directly north. As expected, for all approaches, there is a low value region in front of and to the south of the intruder and a high value region near the goal.
+This section includes visualizations of two-dimensional ``slices'' of several UAV policies and their associated value functions. In each of the slices, the intruder is located at (\SI{700}{m}, \SI{-250}{m}) pointed at heading 135 as indicated by the arrow. The goal is at (\SI{1000}{m}, \num{0}). Each pixel on this image represents the value function or policy evaluated with the UAV at that position pointed directly north. As expected, for all approaches, there is a low value region in front of and to the south of the intruder and a high value region near the goal.
 
 \Cref{fig:dovalue,fig:dopolicy} show the value function and policy for the directly optimized approach, and \cref{fig:tdovalue,fig:tdopolicy} show the same for the trusted directly optimized approach.
 The policies for both approaches are similar, with regions in front of the intruder where sharp turns are commanded.

@@ -49,19 +49,19 @@ Thus a good POMDP framework must have first class support for solving offline an
 \subsubsection{Policy representation}
 
 The policies that different solution techniques yield can take a variety of forms.
-Exact solution techniques typically attempt to find alpha vectors that encode an optimal policy \cite{kaelbling1998planning,kurniawati2008sarsop}, whereas others use finite state machines \cite{bai2010mcvi}.
+Exact solution techniques typically attempt to find alpha vectors that encode an optimal policy \cite{kaelbling1998planning,kurniawati2008sarsop}, whereas others use finite state machines \cite{bai2014integrated}.
 Newer methods may use neural networks \cite{karkus2017qmdp} or other structures to store policies, so a successful framework must provide a flexible way to represent all of these structures.
 
 \subsection{Ease of Use}
 
-In addition to being flexible and performant, the framework must be easy to use.
+In addition to being flexible and fast, the framework must be easy to use.
 It is possible to make a framework that is performant and flexible but so complex that it will not be adopted or will cause much time to be wasted in understanding and implementation.
 For the framework to be considered a success, it must be adopted by the community and serve as an enabler rather than a hindrance to research.
 
 \section{Previous frameworks}
 
 A number of frameworks exist for solving sequential decision problems.
-However, most frameworks are written from a reinforcement learning perspective and hence only support either fully observable problems or problems where the state is fully observable, or environments that can generate observations but do not provide access to the Markov state structure of the problem.
+However, most frameworks are written from a reinforcement learning perspective and hence only support either fully observable problems or environments that can generate observations but do not provide access to the Markov state structure of the problem.
 Examples from this class are RLPy~\cite{geramifard2015rlpy}, and rllab~\cite{duan2016benchmarking}.
 The most closely related frameworks to POMDPs.jl are APPL~\citep{appl}, AI-Toolbox~\citep{aitoolbox}, BURLAP~\cite{diuk2008object}, and ZMDP~\citep{zmdp} in that they explicitly represent the state and partial observability.
 
@@ -84,8 +84,9 @@ The same person will often operate in two or even all three of these roles, but 
 The framework derives its solutions to the challenges outlined above primarily through the use of the Julia language itself \cite{bezanson2017julia}.
 Julia is just-in-time compiled using the state-of-the art LLVM compiler framework~\cite{lattner2004llvm}, giving it speed comparable to traditional compiled languages such as C and C++.
 However, unlike other compiled languages, it has many features that make numerical software development easier and faster.
-For example, like Python, it is dynamically typed, has a powerful and flexible type system, and uses a modern, convenient syntax with features like list comprehensions, and, like Matlab, it has built-in efficient multidimensional arrays and linear algebra.
-The makes meeting the flexibility and ease-of-use goals much easier.
+For example, like Python, it is dynamically typed, has a powerful and flexible type system, and uses a modern, convenient syntax with features like list comprehensions.
+Moreover, like Matlab, it has built-in efficient multidimensional arrays and linear algebra.
+This makes meeting the flexibility and ease-of-use goals much easier.
 
 
 The following section describes some of the concepts used in the framework before the interface itself is outlined.
@@ -93,7 +94,7 @@ The following section describes some of the concepts used in the framework befor
 \subsection{Concepts} \label{sec:concepts}
 
 To fulfill each of the roles mentioned above, a programmer implements one or more classes that concretely represent concepts used to describe POMDPs and solvers.
-The problem writer creates a concrete subtype of the \texttt{POMDP} or \texttt{MDP} abstract classes to represent a problem, the simulator writer creates a \texttt{Simulator} type to run simulations, and the solver writer creates a \texttt{Solver} subtype to run computations offline, and a \texttt{Policy} subtype to execute a policy online.
+The problem writer creates a concrete subtype of the \texttt{POMDP} or \texttt{MDP} abstract types to represent a problem, the simulator writer creates a \texttt{Simulator} type to run simulations, and the solver writer creates a \texttt{Solver} subtype to run computations offline, and a \texttt{Policy} subtype to execute a policy online.
 
 The most abstract concept in POMDPs.jl is the concept of belief.
 In the framework, the term ``Belief'' is used to mean any structure that encodes the information needed to execute the policy.
@@ -116,7 +117,7 @@ Since the belief is often closely related to the policy, the solver writer will 
 
 The behavior of POMDPs.jl objects is defined by implementing methods of interface functions.
 Implementing interface functions serves as an alternative to writing configuration files in formats like POMDPX or specification scripts in purpose-built languages like RDDL~\cite{sanner2010rddl}.
-For example the problem writer may implement a method of the \texttt{reward} function that returns the reward given a problem instance, state and action.
+For example, the problem writer may implement a method of the \texttt{reward} function that returns the reward given a problem instance, state and action.
 Julia will call the correct \texttt{reward} method for the problem type based on its multiple dispatch system \cite{bezanson2017julia}.
 Similarly, an \texttt{Updater} should have a corresponding \texttt{update} method that returns a new belief given an updater object, previous belief, action, and observation.
 The complete interface is not listed here, but is available in the online documentation.
@@ -127,7 +128,7 @@ Packages in the Julia ecosystem provide convenient and efficient types for commo
 
 One flexibility goal that has not been met by most previous frameworks is support of both generative and explicit problem definitions.
 For example, in APPL, all solvers can handle POMDPX problem specification for explicit definitions, but the MCVI and DESPOT solvers use different interfaces for generative problems, and there is no way to represent continuous problems explicitly.
-POMDPs.jl overcomes this challenge by exposing both an \emph{explicit interface} and \emph{generative interface} that can be mixed.
+POMDPs.jl overcomes this challenge by exposing both an \emph{explicit interface} and a \emph{generative interface} that can be mixed.
 If the necessary parts of the explicit interface are implemented for a problem, POMDPs.jl will automatically provide the generative interface functions for the problem.
 The interface relationships are illustrated in \cref{fig:interfaces}.
 Implementations of all of the interface functions are not strictly required; if the minimum set of functions used by a solver or simulator are implemented for a problem, then that solver or simulator will work with that problem.
@@ -254,7 +255,7 @@ The entire problem definition contains several more methods, including \code{rew
 \subsection{Solver} 
 
 A solver implementation requires between one and three type definitions: a \code{Solver} that contains the parameters that define solver behavior, often a \code{Policy} that defines a mapping from beliefs to actions, and sometimes an \code{Updater} if the belief is closely linked to how the policy functions.
-Some example code for the QMDP~\citep{littman1995} solution method is shown below.
+Some example code for the QMDP~\citep{littman1995learning} solution method is shown below.
 
 QMDP works by running value iteration on the fully observable MDP at the core.
 In the \code{solve} function, partially shown in Listing~\ref{lst:qmdp}, the POMDPs.jl functions which will have methods for the particular POMDP being solved are called.
@@ -291,7 +292,7 @@ end
 
 POMDP solution algorithms are typically evaluated by running Monte Carlo simulations.
 A \code{Simulator} calls POMDPs.jl functions defined for the solver and the problem to run a simulation and return the desired statistics from that simulation.
-For example, the experimenter might create a simulator type, {\ttfamily Sim}, and a corresponding {\ttfamily simulate} function (an important part of the main loop is shown in Listing~\ref{lst:sim}).
+For example, the experimenter might create a simulator type, {\ttfamily Sim}, and a corresponding {\ttfamily simulate} function (an important part of the main simulation loop is shown in Listing~\ref{lst:sim}).
 
 \begin{lstfloat}
     \caption{Partial implementation of a simulation routine} \label{lst:sim}   

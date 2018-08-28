@@ -30,7 +30,7 @@ POMCPOW and PFT-DPW overcome this issue by using the observation model to weight
 
 A small amount of previous research has sought online solutions to continuous POMDPs.
 ABT has been extended to use generalized pattern search for selecting locally optimal continuous actions, an approach which is especially effective in problems where high precision is important \cite{seiler2015online,wang2018online}.
-Continuous observation Monte Carlo tree search (COMCTS) constructs observation classification trees to automatically partition the observation space in a POMCP-like approach, however it did not perform much better than a Monte Carlo rollout approach in experiments \cite{pas2012simulation}.
+Continuous observation Monte Carlo tree search (COMCTS) constructs observation classification trees to automatically partition the observation space in a POMCP-like approach; however it did not perform much better than a Monte Carlo rollout approach in experiments \cite{pas2012simulation}.
 
 \section{Algorithms}
 
@@ -56,9 +56,8 @@ $N$ is a count of the number of visits; and $M$ is a count of the number of time
 The list of states associated with a node is denoted $B$, and $W$ is a list of weights corresponding to those states.
 Finally, $Q(ha)$ is an estimate of the value of taking action $a$ after observing history $h$.
 $C$, $N$, $M$, $B$, $W$, and $Q$ are all implicitly initialized to \num{0} or $\emptyset$.
-The \textproc{Rollout} procedure, runs a simulation with a default rollout policy, which can be based on the history or fully observed state, for $d$ steps and returns the discounted reward.
+The \textproc{Rollout} procedure runs a $d$-step simulation with a default rollout policy, which can be based on the history or fully observed state, and returns the discounted reward.
 
-% TODO algorithm vs listing numbering
 \begin{algorithm}[htbp]
     % \floatname{algorithm}{Pseudocode Listing}
     \caption{Common procedures} \label{alg:common}
@@ -87,7 +86,7 @@ The \textproc{Rollout} procedure, runs a simulation with a default rollout polic
 
 The first algorithm that we consider is POMCP with double progressive widening (POMCP-DPW).
 In this algorithm, listed in \cref{alg:pomcpdpw}, the number of new children sampled from any node in the tree is limited by DPW using the parameters $k_a$, $\alpha_a$, $k_o$, and $\alpha_o$.
-In the case where the simulated observation is rejected (line~\ref{lin:notnew}), the tree search is continued with an observation selected in proportion to the number of times, $M$, it has been previously simulated (line~\ref{lin:selecto}) and a state is sampled from the associated belief (line~\ref{lin:samples}).
+In the case where the simulated observation is rejected (line~\ref{lin:notnew}), the tree search is continued with an observation selected in proportion to the number of times, $M$, it has been previously simulated (line~\ref{lin:selecto}), and a state is sampled from the associated belief (line~\ref{lin:samples}).
 
 \begin{algorithm}[htbp]
     \caption{POMCP-DPW} \label{alg:pomcpdpw}
@@ -124,12 +123,12 @@ In the case where the simulated observation is rejected (line~\ref{lin:notnew}),
 
 This algorithm may converge to the optimal solution for POMDPs with discrete observation spaces; however, on continuous observation spaces, POMCP-DPW is suboptimal.
 In particular, it finds a QMDP policy (see \cref{sec:qmdp}).
-In fact, for a modified version of POMCP-DPW, it is easy to prove that it will converge to such a policy (\cref{thm:qmdp}).
-\cref{sec:proof} describes the modified algorithm and problem requirements including the definitions of polynomial exploration, the regularity hypothesis for the problem, and exponentially sure convergence.
+In fact, for a modified version of POMCP-DPW, it is easy to prove that it will converge to such a policy (\cref{thm:qmdp}, below).
+\cref{sec:proof} describes the modified algorithm and problem requirements including the definitions of polynomial exploration, the regularity hypothesis for the problem, and exponentially sure convergence that are used in the discussion of the theorem below.
 
-\begin{definition}[QMDP value]
+\begin{restatable}[QMDP value]{definition}{qmdpvalue}
     Let $Q_\text{MDP}(s,a)$ be the optimal state-action value function assuming full observability starting by taking action $a$ in state $s$. The \emph{QMDP value} at belief $b$, $Q_\text{MDP}(b,a)$, is the expected value of $Q_\text{MDP}(s,a)$ when $s$ is distributed according to $b$.
-\end{definition}
+\end{restatable}
 
 % \begin{theorem}[Modified POMCP-DPW convergence to QMDP] \label{thm:qmdp}
 \begin{restatable}[Modified POMCP-DPW convergence to QMDP]{theorem}{qmdp}
@@ -164,7 +163,7 @@ exponentially surely in $n$, for every action $a$.
 A proof of this theorem that leverages work by \citet{auger2013continuous} is given in \cref{sec:proof}, but a brief justification is provided here.
 The key is that belief nodes will contain only a single state particle (see \cref{fig:treecomp}).
 This is because, since the observation space is continuous with a finite density function, the generative model will (with probability one) produce a unique observation $o$ each time it is queried.
-Thus, for every generated history $h$, only one state will ever be inserted into $B(h)$ (line~\ref{lin:insertion}, \cref{alg:pomcpdpw}), and therefore $h$ is merely an alias for that state. 
+Thus, for every generated history $h$, only one state will ever be inserted into $B(h)$ (\cref{alg:pomcpdpw}, line~\ref{lin:insertion}), and therefore $h$ is merely an alias for that state. 
 Since each belief node corresponds to a state, the solver is actually solving the fully observable MDP at every node except the root node, leading to a QMDP solution.
 
 As a result of \cref{thm:qmdp}, the action chosen by modified POMCP-DPW will match a QMDP policy (a policy of actions that maximize the QMDP value) with high precision exponentially surely (see Corollary 1 of \citet{auger2013continuous}).
@@ -275,7 +274,7 @@ The results in \cref{tab:experiments} show that this approach is only sometimes 
 \subsection{Observation Distribution Requirement}
 
 It is important to note that, while POMCP, POMCP-DPW, and DESPOT only require a generative model of the problem,  both POMCPOW and PFT-DPW require a way to query the relative likelihood of different observations ($\odist$ in line~\ref{lin:weight}).
-One possible objection against POMCPOW and PFT-DPW is that this requirement limit them to a restricted class of POMDPs.
+One possible objection against POMCPOW and PFT-DPW is that this requirement limits them to a restricted class of POMDPs.
 However, there are at least two reasons to expect that it will be an effective tool in practice.
 
 First, this requirement is no more stringent than the requirement for a standard importance resampling particle filter, and such filters are used widely, at least in the field of robotics that the authors are most familiar with. 
@@ -289,7 +288,7 @@ For example, the authors of the original paper describing POMCP~\cite{silver2010
 \section{Experiments} \label{sec:experiments}
 
 Numerical simulation experiments in five domains were conducted to evaluate the performance of POMCPOW and PFT-DPW compared to other solvers.
-The open source code for the experiments is built on the POMDPs.jl framework (\cref{chap:pomdpsjl}) and is hosted at \url{https://github.com/zsunberg/ContinuousPOMDPTreeSearchExperiments.jl}.
+The open source code for the experiments is built on the POMDPs.jl framework (\cref{chap:pomdpsjl}) and hosted at \url{https://github.com/zsunberg/ContinuousPOMDPTreeSearchExperiments.jl}.
 In all experiments, the solvers were limited to \SI{1}{second} of computation time per step.
 Belief updates were accomplished with a particle filter independent of the planner, and no part of the tree was saved for re-use on subsequent steps.
 All results are presented together in~\cref{tab:experiments} on \cpageref{tab:experiments}.
@@ -325,7 +324,7 @@ POMCP performs much better than reported by \citet{somani2013despot} because thi
     \centering
     % \input{ld_fig.pgf}
     \includegraphics[width=0.6\columnwidth]{media/ld_fig.pdf}
-    \caption[Light Dark problem]{Example trajectories in the Light Dark domain. POMCPOW travels to the light region and accurately localizes before moving to the goal. POMCP-DPW displays QMDP-like behavior: it is unable to localize well enough to take action \num{0} with confidence. The belief particles far away from \num{0} in the POMCP-DPW plot are due to particle reinvigoration that makes the filter more robust.}
+    \caption[Light Dark problem]{Example trajectories in the Light Dark domain. POMCPOW travels to the light region and accurately localizes before moving to the goal. POMCP-DPW displays QMDP-like behavior: It is unable to localize well enough to take action \num{0} with confidence. The belief particles far away from \num{0} in the POMCP-DPW plot are due to particle reinvigoration that makes the filter more robust.}
     \label{fig:ld}
 \end{figure}
 

@@ -79,7 +79,7 @@ The distribution of these parameters in the population of vehicles will be denot
 % IDM Model Description
 \subsubsection{IDM}
 
-The IDM Model was developed as a simple model for ``microscopic'' simulations of traffic flows and is able to reproduce some phenomena observed in real-world traffic flows.
+The IDM Model was developed as a simple model for ``microscopic'' simulations of traffic flows and is able to reproduce some phenomena observed in real-world traffic flows~\cite{treiber2000idm}.
 It determines the longitudinal acceleration for a human-driven car, $\ddot{x}$, based on the desired distance gap to the preceding car, $g$, the absolute velocity, $\dot{x}$, and the velocity relative to the preceding car $\Delta \dot{x}$.
 The longitudinal acceleration is governed by the following equation:
 \begin{equation}
@@ -232,7 +232,7 @@ The new weights are determined by approximating the conditional probability of t
 \gamma_\text{lane} \max\left\{0, \frac{a - 2 \, \left| \dot{x}' - \hat{\dot{x}}' \right|}{a} \right\} & \text{o.w.}
 \end{cases} \right\} \appropto \operatorname{Pr}\left(\left.\hat{\theta}^k \right| o \right)
 \end{equation*}
-where $\dot{x}'$ and $y'$ are taken from the observation, $\hat{\dot{x}}'$ and $\hat{\dot{y}}'$ are from ${\hat{s}^k}{'}$, the max expression is proportional to the probability density of the acceleration noise triangular distribution (ignoring the effects of the collision mitigation modifications), and $\gamma_\text{lane} \in [0,1]$ is a hand-tuned parameter that penalizes incorrect lane changes (see \cref{tab:params}).
+where $\dot{x}'$ and $y'$ are taken from the observation, $\hat{\dot{x}}'$ and $\hat{\dot{y}}'$ are from ${\hat{s}^k}{'}$, the max expression is proportional to the probability density of the acceleration noise triangular distribution, and $\gamma_\text{lane} \in [0,1]$ is a hand-tuned parameter that penalizes incorrect lane changes (see \cref{tab:params}).
 
 
 Model predictive control (MPC) is a widely used family of control techniques that use an imperfect model and feedback measurements to choose actions \cite{garcia1989model}. At each time step, a model predictive controller calculates a sequence of control actions that will maximize a reward function of the states visited up to a future horizon given that the system behaves according to a model. The first control action in this optimized sequence is executed, and the process is repeated after a new measurement is received.
@@ -514,7 +514,7 @@ However, the relative effectiveness of different POMDP approaches is heavily dep
 If the internal states are highly correlated, simply estimating them with a particle filter and planning assuming certainty equivalence is adequate to nearly match the upper performance bound.
 On the other hand, when the parameters are uncorrelated, the QMDP planner performs much better than the certainty equivalence planner, and POMCPOW performs much better than QMDP.
 Moreover, in this uncorrelated case, there is a significant gap between all approaches and the upper bound.
-Partial correlation results in the expected results between the correlated and uncorrelated cases.
+Partial correlation produces the expected results between the correlated and uncorrelated cases.
 
 Experiments also characterize the robustness of the algorithms to incorrect parameter distributions.
 POMCPOW and QMDP do not suffer significant performance degradation when the parameter correlation is not correct.
