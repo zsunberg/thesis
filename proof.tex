@@ -149,7 +149,7 @@ is based on the specific coefficients chosen by \citet{auger2013continuous} and 
 
     The result of these changes is shown in \cref{alg:c}. It is straightforward to verify that this algorithm is equivalent to PUCT applied to $\mathcal{M}$.
     Each observation-terminated history, $h$, corresponds to a PUCT ``decision node'', $z$, and each action-terminated history, $ha$, corresponds to a PUCT ``chance node'', $w$.
-    In other words, the observations have no meaning in the tree other than making up the histories, which are effectively just keys or aliases for the state nodes.
+    In other words, the observations have no meaning in the tree other than making up the histories, which are effectively just keys to or aliases for the state nodes.
     
     Since PUCT is guaranteed by Theorem 1 of \citet{auger2013continuous} to converge to the optimal value function of $\mathcal{M}$ exponentially surely, POMCP-DPW is guaranteed to converge to the QMDP value exponentially surely, and the theorem is proven.
 
